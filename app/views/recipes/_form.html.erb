@@ -1,0 +1,386 @@
+<%= form_for :recipe do |f| %>
+
+  <% if @recipe.errors.any? %>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@recipe.errors.count, "error") %> prohibited
+        this recipe from being saved:
+      </h2>
+      <ul>
+        <% @recipe.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <p>
+    <%= f.label :name %><br>
+    <%= f.text_field :name %>
+  </p>
+
+  <p>
+    <%= f.label :description %><br>
+    <%= f.text_field :description %>
+  </p>
+
+  <p>
+    <%= f.label :source %><br>
+    <%= f.text_field :source %>
+  </p>
+
+  <p>
+    <%= f.label :category %><br>
+    <%= f.text_field :category %>
+  </p>
+
+  <p>
+    <%= f.label :prep_time %><br>
+    <%= f.text_field :prep_time %>
+  </p>
+
+  <p>
+    <%= f.label :servings %><br>
+    <%= f.text_field :servings %>
+  </p>
+
+  <p>
+    <%= f.label :cals_serving %><br>
+    <%= f.text_field :cals_serving %>
+  </p>
+
+  <p>
+    <%= f.label :attachments %><br>
+    <%= f.file_field :attachments %>
+  </p>
+
+  <p>
+    <%= f.label :notes %><br>
+    <%= f.text_field :notes %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient1 %><br>
+    <%= f.text_field :ingredient1 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient2 %><br>
+    <%= f.text_field :ingredient2 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient3 %><br>
+    <%= f.text_field :ingredient3 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient4 %><br>
+    <%= f.text_field :ingredient4 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient5 %><br>
+    <%= f.text_field :ingredient5 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient6 %><br>
+    <%= f.text_field :ingredient6 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient7 %><br>
+    <%= f.text_field :ingredient7 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient8 %><br>
+    <%= f.text_field :ingredient8 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient9 %><br>
+    <%= f.text_field :ingredient9 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient10 %><br>
+    <%= f.text_field :ingredient10 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient11 %><br>
+    <%= f.text_field :ingredient11 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient12 %><br>
+    <%= f.text_field :ingredient12 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient13 %><br>
+    <%= f.text_field :ingredient13 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient14 %><br>
+    <%= f.text_field :ingredient14 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient15 %><br>
+    <%= f.text_field :ingredient15 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient16 %><br>
+    <%= f.text_field :ingredient16 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient17 %><br>
+    <%= f.text_field :ingredient17 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient18 %><br>
+    <%= f.text_field :ingredient18 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient19 %><br>
+    <%= f.text_field :ingredient19 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient20 %><br>
+    <%= f.text_field :ingredient20 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient21 %><br>
+    <%= f.text_field :ingredient21 %>
+  </p>
+
+  <p>
+    <%= f.label :ingredient22 %><br>
+    <%= f.text_field :ingredient22 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity1 %><br>
+    <%= f.text_field :quantity1 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity2 %><br>
+    <%= f.text_field :quantity2 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity3 %><br>
+    <%= f.text_field :quantity3 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity4 %><br>
+    <%= f.text_field :quantity4 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity5 %><br>
+    <%= f.text_field :quantity5 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity6 %><br>
+    <%= f.text_field :quantity6 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity7 %><br>
+    <%= f.text_field :quantity7 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity8 %><br>
+    <%= f.text_field :quantity8 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity9 %><br>
+    <%= f.text_field :quantity9 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity10 %><br>
+    <%= f.text_field :quantity10 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity11 %><br>
+    <%= f.text_field :quantity11 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity12 %><br>
+    <%= f.text_field :quantity12 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity13 %><br>
+    <%= f.text_field :quantity13 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity14 %><br>
+    <%= f.text_field :quantity14 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity15 %><br>
+    <%= f.text_field :quantity15 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity16 %><br>
+    <%= f.text_field :quantity16 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity17 %><br>
+    <%= f.text_field :quantity17 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity18 %><br>
+    <%= f.text_field :quantity18 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity19 %><br>
+    <%= f.text_field :quantity19 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity20 %><br>
+    <%= f.text_field :quantity20 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity21 %><br>
+    <%= f.text_field :quantity21 %>
+  </p>
+
+  <p>
+    <%= f.label :quantity22 %><br>
+    <%= f.text_field :quantity22 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction1 %><br>
+    <%= f.text_field :instruction1 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction2 %><br>
+    <%= f.text_field :instruction2 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction3 %><br>
+    <%= f.text_field :instruction3 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction4 %><br>
+    <%= f.text_field :instruction4 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction5 %><br>
+    <%= f.text_field :instruction5 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction6 %><br>
+    <%= f.text_field :instruction6 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction7 %><br>
+    <%= f.text_field :instruction7 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction8 %><br>
+    <%= f.text_field :instruction8 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction9 %><br>
+    <%= f.text_field :instruction9 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction10 %><br>
+    <%= f.text_field :instruction10 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction11 %><br>
+    <%= f.text_field :instruction11 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction12 %><br>
+    <%= f.text_field :instruction12 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction13 %><br>
+    <%= f.text_field :instruction13 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction14 %><br>
+    <%= f.text_field :instruction14 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction15 %><br>
+    <%= f.text_field :instruction15 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction16 %><br>
+    <%= f.text_field :instruction16 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction17 %><br>
+    <%= f.text_field :instruction17 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction18 %><br>
+    <%= f.text_field :instruction18 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction19 %><br>
+    <%= f.text_field :instruction19 %>
+  </p>
+
+  <p>
+    <%= f.label :instruction20 %><br>
+    <%= f.text_field :instruction20 %>
+  </p>
+
+
+  <p>
+    <%= f.submit %>
+  </p>
+<% end %>
