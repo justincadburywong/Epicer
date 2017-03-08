@@ -9,6 +9,7 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.string :servings
       t.string :cals_serving
       t.binary :attachments
+      t.string :notes
       t.string :ingredient1
       t.string :ingredient2
       t.string :ingredient3
@@ -53,28 +54,6 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.integer :quantity20
       t.integer :quantity21
       t.integer :quantity22
-      t.string :measure1
-      t.string :measure2
-      t.string :measure3
-      t.string :measure4
-      t.string :measure5
-      t.string :measure6
-      t.string :measure7
-      t.string :measure8
-      t.string :measure9
-      t.string :measure10
-      t.string :measure11
-      t.string :measure12
-      t.string :measure13
-      t.string :measure14
-      t.string :measure15
-      t.string :measure16
-      t.string :measure17
-      t.string :measure18
-      t.string :measure19
-      t.string :measure20
-      t.string :measure21
-      t.string :measure22
       t.text :instruction1
       t.text :instruction2
       t.text :instruction3
