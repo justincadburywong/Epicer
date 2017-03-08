@@ -43,7 +43,7 @@ end
 
 private
   def recipe_params
-    params.require)(:recipe).permit(:name, :descrition, :source, :category, :prep_time, :servings, :cals_serving, :attachments,
+    params.require(:recipe).permit(:name, :descrition, :source, :category, :prep_time, :servings, :cals_serving, :attachments,
       :ingredient1,
       :ingredient2,
       :ingredient3,
