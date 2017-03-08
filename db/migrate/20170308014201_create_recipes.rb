@@ -32,28 +32,28 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.string :ingredient20
       t.string :ingredient21
       t.string :ingredient22
-      t.integer :quantity1
-      t.integer :quantity2
-      t.integer :quantity3
-      t.integer :quantity4
-      t.integer :quantity5
-      t.integer :quantity6
-      t.integer :quantity7
-      t.integer :quantity8
-      t.integer :quantity9
-      t.integer :quantity10
-      t.integer :quantity11
-      t.integer :quantity12
-      t.integer :quantity13
-      t.integer :quantity14
-      t.integer :quantity15
-      t.integer :quantity16
-      t.integer :quantity17
-      t.integer :quantity18
-      t.integer :quantity19
-      t.integer :quantity20
-      t.integer :quantity21
-      t.integer :quantity22
+      t.string :quantity1
+      t.string :quantity2
+      t.string :quantity3
+      t.string :quantity4
+      t.string :quantity5
+      t.string :quantity6
+      t.string :quantity7
+      t.string :quantity8
+      t.string :quantity9
+      t.string :quantity10
+      t.string :quantity11
+      t.string :quantity12
+      t.string :quantity13
+      t.string :quantity14
+      t.string :quantity15
+      t.string :quantity16
+      t.string :quantity17
+      t.string :quantity18
+      t.string :quantity19
+      t.string :quantity20
+      t.string :quantity21
+      t.string :quantity22
       t.text :instruction1
       t.text :instruction2
       t.text :instruction3
@@ -75,6 +75,7 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.text :instruction19
       t.text :instruction20
 
+      # t.references :user, foreign_key: true
       t.timestamps
     end
   end
