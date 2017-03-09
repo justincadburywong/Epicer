@@ -1,6 +1,6 @@
 class Recipe < ApplicationRecord
 
-  # belongs_to :user
+  belongs_to :user
 
   validates :name, :description, :category, :ingredient1, :quantity1, :instruction1, presence: true
   validates :name, :description, length: { minimum: 3 }
