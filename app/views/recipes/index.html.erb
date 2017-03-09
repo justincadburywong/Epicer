@@ -12,10 +12,12 @@
       <td><%= recipe.name %></td>
       <td><%= recipe.description %></td>
       <td><%= link_to 'Show', recipe_path(recipe) %></td>
-      <td><%= link_to 'Edit', edit_recipe_path(recipe) %></td>
-      <td><%= link_to 'Destroy', recipe_path(recipe),
-              method: :delete,
-              data: { confirm: 'Are you sure?' } %></td>
+      <% if recipe.user_id = current_user %>
+        <td><%= link_to 'Edit', edit_recipe_path(recipe) %></td>
+        <td><%= link_to 'Destroy', recipe_path(recipe),
+                method: :delete,
+                data: { confirm: 'Are you sure?' } %></td>
+      <% end %>
     </tr>
   <% end %>
 </table>

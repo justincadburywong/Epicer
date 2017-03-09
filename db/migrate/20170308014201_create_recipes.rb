@@ -1,6 +1,7 @@
 class CreateRecipes < ActiveRecord::Migration[5.0]
   def change
     create_table :recipes do |t|
+      t.integer :user_id
       t.string :name
       t.string :description
       t.string :source
@@ -74,7 +75,6 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.text :instruction18
       t.text :instruction19
       t.text :instruction20
-
       # t.references :user, foreign_key: true
       t.timestamps
     end

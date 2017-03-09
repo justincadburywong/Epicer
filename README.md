@@ -1,24 +1,15 @@
-# README
+# Epicer
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+An app to store and view all of your recipes in one place!
 
-Things you may want to cover:
+## User stories
 
-* Ruby version
+A user can log in, log out, sign up, etc
 
-* System dependencies
+A user can see all of the recipes on the website
 
-* Configuration
+A user can add, edit and delete their own recipes
 
-* Database creation
+## Stretch goals
 
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+A recipe can be printed pretty

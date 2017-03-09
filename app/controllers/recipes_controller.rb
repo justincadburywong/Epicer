@@ -1,4 +1,6 @@
 class RecipesController < ApplicationController
+  before_filter :authenticate_user!, except: [ :index, :show ]
+
   def index
     @recipes = Recipe.all
   end
@@ -17,6 +19,7 @@ class RecipesController < ApplicationController
 
   def create
     @recipe = Recipe.new(recipe_params)
+    @recipe.user = current_user
     if @recipe.save
       redirect_to @recipe
     else
@@ -26,6 +29,7 @@ class RecipesController < ApplicationController
 
   def update
     @recipe = Recipe.find(params[:id])
+    @recipe.user = current_user
     if @recipe.update(recipe_params)
       redirect_to @recipe
     else
