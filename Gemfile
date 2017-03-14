@@ -54,6 +54,7 @@ group :development, :test do
   gem 'chromedriver-helper'
   gem 'rails-controller-testing'
   gem 'faker'
+  gem 'factory_girl_rails'
 end
 
 group :development do
