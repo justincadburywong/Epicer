@@ -10,7 +10,7 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.string :servings
       t.string :cals_serving
       t.binary :attachments
-      t.string :notes
+      t.text :notes
       t.string :ingredient1
       t.string :ingredient2
       t.string :ingredient3
@@ -75,7 +75,7 @@ class CreateRecipes < ActiveRecord::Migration[5.0]
       t.text :instruction18
       t.text :instruction19
       t.text :instruction20
-      # t.references :user, foreign_key: true
+
       t.timestamps
     end
   end
