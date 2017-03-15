@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-
+ruby '2.3.1'
 git_source(:github) do |repo_name|
   repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?("/")
   "https://github.com/#{repo_name}.git"
@@ -10,8 +10,9 @@ end
 gem 'rails', '~> 5.0.1'
 # Use postgres as the database for Active Record
 gem 'pg', '~> 0.18'
-
+gem 'dotenv-rails'
 gem 'devise'
+gem 'sendgrid'
 # Use Puma as the app server
 gem 'puma', '~> 3.0'
 # Use SCSS for stylesheets
@@ -40,8 +41,20 @@ gem 'jbuilder', '~> 2.5'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platform: :mri
-
+  gem 'guard'
+  gem 'guard-rspec'
+  gem 'pry-rails'
+  gem 'better_errors'
+  gem 'rspec-rails'
+  gem 'database_cleaner'
+  gem 'binding_of_caller'
+  gem 'shoulda'
+  gem 'capybara'
+  gem 'selenium-webdriver'
+  gem 'chromedriver-helper'
+  gem 'rails-controller-testing'
   gem 'faker'
+  gem 'factory_girl_rails'
 end
 
 group :development do

@@ -5,3 +5,9 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+User.delete_all
+Recipe.delete_all
+
+User.create(email: "justin@theinternet.com", password: "123456")
+
+Recipe.create(user_id: 1, name: "Best Chicken", description: "The best in the world", category: "Chicken, Bon Appetit", ingredient1: "Chicken", quantity1: "1 pound", instruction1: "Roast the chicken")
