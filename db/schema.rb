@@ -25,7 +25,7 @@ ActiveRecord::Schema.define(version: 20170308224523) do
     t.string   "servings"
     t.string   "cals_serving"
     t.binary   "attachments"
-    t.string   "notes"
+    t.text     "notes"
     t.string   "ingredient1"
     t.string   "ingredient2"
     t.string   "ingredient3"
