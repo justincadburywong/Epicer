@@ -1,23 +1,16 @@
 
-<h1>Listing Recipes</h1>
-
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Description</th>
-  </tr>
-
   <% @recipes.each do |recipe| %>
-    <tr>
-      <td><%= recipe.name %></td>
-      <td><%= recipe.description %></td>
-      <td><%= link_to 'Show', recipe_path(recipe) %></td>
-      <% if recipe.user_id = current_user %>
-        <td><%= link_to 'Edit', edit_recipe_path(recipe) %></td>
-        <td><%= link_to 'Destroy', recipe_path(recipe),
-                method: :delete,
-                data: { confirm: 'Are you sure?' } %></td>
-      <% end %>
-    </tr>
+
+    <div class="card-box col-md-4 col-sm-6">
+        <div class="card card-just-text card-with-border" data-background="image" data-src="<%=recipe.attachments%>">
+          <%= link_to recipe_path(recipe) do %>
+            <div class="content">
+                <h4 class="title title-modern"><%=recipe.name%></h4>
+                <p class="description"><%=recipe.description%></p>
+            </div>
+            <% end %>
+            <div class="filter"></div>
+        </div> <!-- end card -->
+    </div>
+
   <% end %>
-</table>

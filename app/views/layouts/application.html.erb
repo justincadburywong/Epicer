@@ -3,19 +3,101 @@
   <head>
     <title>Epicer</title>
     <%= csrf_meta_tags %>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
+    <title>Epicer</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="assets/stylesheets/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link href="assets/stylesheets/small-business.css" rel="stylesheet"/>
+    <link href="assets/stylesheets/hipster_cards.css" rel="stylesheet"/>
+    <link href="assets/stylesheets/pe-icon-7-stroke.css" rel="stylesheet"/>
+
+    <!--     Fonts and icons     -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link href='http://fonts.googleapis.com/css?family=Playfair+Display|Raleway:700,100,400|Roboto:400,700|Playfair+Display+SC:400,700' rel='stylesheet' type='text/css'>
+
+    <style>
+        .card{
+            margin-bottom: 70px;
+        }
+    </style>
     <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
     <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
   </head>
 
   <body>
-    <% if current_user %>
-      <li><%= link_to "Account", "/users/#{current_user.id}" %></li>
-      <li><%= link_to "Sign Out", destroy_user_session_path, method: :delete %></li>
-    <% else %>
-      <li><%= link_to "Log In", new_user_session_path %></li>
-      <li><%= link_to "Sign Up", new_user_registration_path %></li>
-    <% end %>
-    <%= yield %>
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">
+                    <img src="http://placehold.it/150x50&text=Logo" alt="">
+                </a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                  <% if current_user %>
+                    <li class=""><%= link_to "Account", "/users/#{current_user.id}" %></li>
+                    <li class=""><%= link_to "Sign Out", destroy_user_session_path, method: :delete %></li>
+                  <% else %>
+                    <li class=""><%= link_to "Log In", new_user_session_path %></li>
+                    <li class=""><%= link_to "Sign Up", new_user_registration_path %></li>
+                  <% end %>
+                  <li class="">
+                    <input type="search" class="navbar-brand" placeholder="search..">
+                    <span class="input-group-btn">...</span>
+                  </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+    <div class="masonry-container">
+      <%= yield %>
+    </div>
+
   </body>
+
+  <script src="assets/javascripts/jquery-1.10.2.js" type="text/javascript"></script>
+	<script src="assets/javascripts/bootstrap.min.js" type="text/javascript"></script>
+	<script src="assets/javascripts/hipster-cards.js"></script>
+
+	<!--  Just for demo	 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/masonry/3.3.1/masonry.pkgd.min.js"></script>
+
+	<script>
+
+    	$().ready(function(){
+
+        	var $container = $('.masonry-container');
+
+            doc_width = $(document).width();
+
+            if (doc_width >= 768){
+                $container.masonry({
+                    itemSelector        : '.card-box',
+                    columnWidth         : '.card-box',
+                    transitionDuration  : 0
+                });
+            } else {
+                $('.mas-container').removeClass('mas-container').addClass('row');
+            }
+    	});
+	</script>
+
 </html>
