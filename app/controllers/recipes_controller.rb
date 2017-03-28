@@ -19,7 +19,7 @@ class RecipesController < ApplicationController
 
   def create
     @recipe = Recipe.new(recipe_params)
-    @recipe.user_id = current_user
+    @recipe.user_id = current_user.id
     if @recipe.save
       redirect_to @recipe
     else
@@ -29,7 +29,7 @@ class RecipesController < ApplicationController
 
   def update
     @recipe = Recipe.find(params[:id])
-    @recipe.user = current_user
+    @recipe.user = current_user.id
     if @recipe.update(recipe_params)
       redirect_to @recipe
     else
@@ -39,7 +39,7 @@ class RecipesController < ApplicationController
 
   def destroy
     @recipe = Recipe.find(params[:id])
-    if recipe.user_id = current_user
+    if @recipe.user_id = current_user.id
       @recipe.destroy
     end
 
