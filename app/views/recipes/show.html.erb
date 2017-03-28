@@ -45,12 +45,15 @@
   </div>
   <!-- /.row -->
   <div>
+    <%= link_to 'Back', recipes_path %>
     <% if current_user %>
       <% if @recipe.user_id = current_user.id %>
       <%= link_to 'Edit', edit_recipe_path(@recipe) %>
+      <%= link_to 'Delete', recipe_path(@recipe),
+              method: :delete,
+              data: { confirm: 'Are you sure?' } %>
       <% end %>
     <% end %>
-    <%= link_to 'Back', recipes_path %>
 
   </div>
   <!-- Footer -->
