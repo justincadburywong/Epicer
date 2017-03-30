@@ -1,4 +1,4 @@
-[![CircleCI Status](https://circleci.com/gh/justincadburywong/Epicer.svg?style=svg)](https://circleci.com/gh/justincadburywong/Epicer)
+[![CircleCI Status](https://circleci.com/gh/justincadburywong/Epicer.svg?style=shield&circle-token=b0bfe6fec303a35c2c9fac03e27079ad04a4abb3)](https://circleci.com/gh/justincadburywong/Epicer)
 
 # Epicer
 
