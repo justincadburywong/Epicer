@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/justincadburywong/Epicer.svg?style=svg)](https://circleci.com/gh/justincadburywong/Epicer)
+
 # Epicer
 
 An app to store and view all of your recipes in one place!
