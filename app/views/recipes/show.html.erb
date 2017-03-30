@@ -14,7 +14,7 @@
   </div>
   <!-- /.row -->
 
-  <hr>
+  <br>
 
   <!-- Call to Action Well -->
   <% if @recipe.notes %>
@@ -44,17 +44,21 @@
       <!-- /.col-md-4 -->
   </div>
   <!-- /.row -->
-  <div>
-    <%= link_to 'Back', recipes_path %>
-    <% if current_user %>
-      <% if @recipe.user_id = current_user.id %>
-      <%= link_to 'Edit', edit_recipe_path(@recipe) %>
-      <%= link_to 'Delete', recipe_path(@recipe),
-              method: :delete,
-              data: { confirm: 'Are you sure?' } %>
-      <% end %>
-    <% end %>
-
+  <br>
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="well text-center">
+        <%= link_to 'Back', recipes_path %>
+        <% if current_user %>
+          <% if @recipe.user_id = current_user.id %>
+          <%= link_to 'Edit', edit_recipe_path(@recipe) %>
+          <%= link_to 'Delete', recipe_path(@recipe),
+                  method: :delete,
+                  data: { confirm: 'Are you sure?' } %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
   </div>
   <!-- Footer -->
   <footer>
