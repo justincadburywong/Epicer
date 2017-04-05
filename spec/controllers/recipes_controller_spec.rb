@@ -38,23 +38,23 @@ RSpec.describe RecipesController, type: :controller do
     end
   end
 
-  context "logged in" do
-    before(:each) do
-      session[:user_id] = @user.id
-    end
-    describe "/new" do
-      it 'renders the new page if the user is logged in' do
-        get :new
-        expect(response).to have_rendered("recipes/new")
-      end
-    end
-
-    describe "/edit" do
-      it "renders the edit page if the user is logged in" do
-        get :edit, params: { id: @recipe.id }
-        expect(response).to have_rendered("recipes/edit")
-      end
-    end
-  end
+  # context "logged in" do
+  #   before(:each) do
+  #     session[:user_id] = @user.id
+  #   end
+  #   describe "/new" do
+  #     it 'renders the new page if the user is logged in' do
+  #       get :new
+  #       expect(response).to have_rendered("recipes/new")
+  #     end
+  #   end
+  #
+  #   describe "/edit" do
+  #     it "renders the edit page if the user is logged in" do
+  #       get :edit, params: { id: @recipe.id }
+  #       expect(response).to have_rendered("recipes/edit")
+  #     end
+  #   end
+  # end
 
 end
