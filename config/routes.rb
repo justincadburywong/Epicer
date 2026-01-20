@@ -12,5 +12,16 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "recipes#index"
 
-  resources :recipes
+  resources :recipes do
+    collection do
+      get :import
+      post :import
+      get :scan
+      post :scan, action: :process_scan
+    end
+    member do
+      delete :purge_image
+      delete :purge_document
+    end
+  end
 end

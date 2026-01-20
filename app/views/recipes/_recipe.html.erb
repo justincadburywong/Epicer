@@ -1,4 +1,4 @@
-<%= link_to recipe_path(recipe), class: "block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden" do %>
+<%= link_to recipe_path(recipe), data: { turbo_frame: "_top" }, class: "block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden" do %>
   <div class="p-4">
     <h2 class="font-semibold text-lg text-gray-900 mb-2"><%= recipe.title %></h2>
     

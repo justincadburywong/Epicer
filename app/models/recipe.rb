@@ -12,6 +12,15 @@ class Recipe < ApplicationRecord
   validates :rating, inclusion: { in: 1..5 }, allow_nil: true
   validates :prep_time, :cook_time, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
+  scope :search, ->(query) {
+    return all if query.blank?
+    
+    where(
+      "title ILIKE :q OR description ILIKE :q OR instructions ILIKE :q OR notes ILIKE :q",
+      q: "%#{sanitize_sql_like(query)}%"
+    )
+  }
+
   def total_time
     (prep_time || 0) + (cook_time || 0)
   end

@@ -1,16 +1,59 @@
 <div class="w-full">
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
     <h1 class="font-bold text-4xl">My Recipes</h1>
-    <%= link_to "New Recipe", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg" %>
+    <div class="flex flex-wrap gap-2">
+      <%= link_to scan_recipes_path, class: "bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-1" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        Scan
+      <% end %>
+      <%= link_to "Import URL", import_recipes_path, class: "bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg" %>
+      <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg" %>
+    </div>
   </div>
 
-  <div id="recipes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <% @recipes.each do |recipe| %>
-      <%= render recipe %>
+  <%= form_with url: recipes_path, method: :get, data: { controller: "search", turbo_frame: "recipes_list", turbo_action: "advance" }, class: "mb-6" do |form| %>
+    <div class="relative">
+      <%= form.search_field :query, 
+          value: params[:query],
+          placeholder: "Search recipes...",
+          autofocus: params[:query].present?,
+          class: "w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500",
+          data: { action: "input->search#submit" } %>
+      <svg class="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <% if params[:query].present? %>
+        <%= link_to recipes_path, class: "absolute right-3 top-3 text-gray-400 hover:text-gray-600", data: { turbo_frame: "recipes_list" } do %>
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "recipes_list" do %>
+    <% if params[:query].present? %>
+      <p class="text-sm text-gray-500 mb-4">
+        Found <%= pluralize(@recipes.count, "recipe") %> matching "<%= params[:query] %>"
+      </p>
     <% end %>
-  </div>
 
-  <% if @recipes.empty? %>
-    <p class="text-gray-500 text-center py-12">No recipes yet. Add your first recipe!</p>
+    <div id="recipes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @recipes.each do |recipe| %>
+        <%= render recipe %>
+      <% end %>
+    </div>
+
+    <% if @recipes.empty? %>
+      <% if params[:query].present? %>
+        <p class="text-gray-500 text-center py-12">No recipes found matching "<%= params[:query] %>"</p>
+      <% else %>
+        <p class="text-gray-500 text-center py-12">No recipes yet. Add your first recipe!</p>
+      <% end %>
+    <% end %>
   <% end %>
 </div>

@@ -43,6 +43,8 @@ gem "thruster", require: false
 # gem "image_processing", "~> 1.2"
 # 
 gem "friendly_id", "~> 5.4"
+gem "nokogiri"      # HTML parsing (likely already included)
+gem "httparty"      # HTTP requests
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -65,3 +67,6 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "rtesseract", "~> 3.1"
+gem "mini_magick", "~> 5.3"

@@ -22,8 +22,33 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+      <div class="container mx-auto px-4 sm:px-6">
+        <div class="flex justify-between items-center h-16">
+          <%= link_to root_path, class: "flex items-center gap-2" do %>
+            <span class="text-2xl">🍳</span>
+            <span class="font-bold text-xl text-emerald-600">Epicer</span>
+          <% end %>
+          <div class="flex items-center gap-2 sm:gap-4">
+            <%= link_to "Recipes", recipes_path, class: "text-gray-600 hover:text-emerald-600 text-sm sm:text-base" %>
+            <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg" %>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mx-auto pt-20 pb-8 px-4 sm:px-6">
+      <% if notice.present? %>
+        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg">
+          <%= notice %>
+        </div>
+      <% end %>
+      <% if alert.present? %>
+        <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <%= alert %>
+        </div>
+      <% end %>
       <%= yield %>
     </main>
   </body>

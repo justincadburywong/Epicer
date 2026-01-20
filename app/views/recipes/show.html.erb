@@ -1,13 +1,19 @@
 <div class="w-full max-w-4xl">
-  <div class="mb-6">
+  <div class="mb-6 flex justify-between items-center no-print">
     <%= link_to "← Back to recipes", recipes_path, class: "text-emerald-600 hover:text-emerald-700" %>
+    <button onclick="window.print()" class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+      </svg>
+      Print Recipe
+    </button>
   </div>
 
   <article class="bg-white rounded-lg shadow-md p-6">
     <header class="mb-6">
       <div class="flex justify-between items-start">
         <h1 class="font-bold text-3xl"><%= @recipe.title %></h1>
-        <div class="flex gap-2">
+        <div class="flex gap-2 no-print">
           <%= link_to "Edit", edit_recipe_path(@recipe), class: "bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded" %>
           <%= button_to "Delete", @recipe, method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded" %>
         </div>
@@ -39,41 +45,102 @@
       <% end %>
     </header>
 
+    <% if @recipe.images.attached? %>
+      <section class="mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <% @recipe.images.each do |image| %>
+            <%= link_to rails_blob_path(image, disposition: "inline"), target: "_blank", class: "block" do %>
+              <%= image_tag image, class: "w-full h-32 sm:h-48 object-cover rounded-lg hover:opacity-90 transition-opacity" %>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+
     <% if @recipe.description.present? %>
       <section class="mb-6">
         <p class="text-gray-700"><%= @recipe.description %></p>
       </section>
     <% end %>
 
-    <% if @recipe.ingredients.any? %>
-      <section class="mb-6">
-        <h2 class="font-semibold text-xl mb-3">Ingredients</h2>
-        <ul class="list-disc list-inside space-y-1">
-          <% @recipe.ingredients.each do |ingredient| %>
-            <li>
-              <span class="font-medium"><%= ingredient.display_quantity %></span>
-              <%= ingredient.unit %>
-              <%= ingredient.name %>
-            </li>
-          <% end %>
-        </ul>
-      </section>
-    <% end %>
+    <div class="print-columns">
+      <% if @recipe.ingredients.any? %>
+        <section class="mb-6" data-controller="servings" data-servings-original-value="<%= @recipe.servings || 1 %>">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <h2 class="font-semibold text-xl">Ingredients</h2>
+            <% if @recipe.servings.present? %>
+              <div class="flex items-center gap-1 sm:gap-2 text-sm no-print">
+                <span class="text-gray-600 hidden sm:inline">Servings:</span>
+                <button type="button" 
+                        data-action="click->servings#decrement"
+                        class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">−</button>
+                <input type="number" 
+                       min="1" 
+                       value="<%= @recipe.servings %>"
+                       data-servings-target="input"
+                       data-action="change->servings#adjust"
+                       class="w-14 sm:w-16 text-center rounded border-gray-300 text-sm">
+                <button type="button"
+                        data-action="click->servings#increment"
+                        class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">+</button>
+                <button type="button"
+                        data-action="click->servings#reset"
+                        class="text-emerald-600 hover:text-emerald-700 text-xs ml-1 sm:ml-2">Reset</button>
+              </div>
+            <% end %>
+          </div>
+          <ul class="list-disc list-inside space-y-1">
+            <% @recipe.ingredients.each do |ingredient| %>
+              <li>
+                <span class="font-medium" 
+                      data-servings-target="quantity"
+                      data-original-quantity="<%= ingredient.quantity %>"><%= ingredient.display_quantity %></span>
+                <%= ingredient.unit %>
+                <%= ingredient.name %>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
 
-    <% if @recipe.instructions.present? %>
-      <section class="mb-6">
-        <h2 class="font-semibold text-xl mb-3">Instructions</h2>
-        <div class="prose prose-emerald">
-          <%= simple_format(@recipe.instructions) %>
-        </div>
-      </section>
-    <% end %>
+      <% if @recipe.instructions.present? %>
+        <section class="mb-6">
+          <h2 class="font-semibold text-xl mb-3">Instructions</h2>
+          <div class="prose prose-emerald">
+            <%= simple_format(@recipe.instructions) %>
+          </div>
+        </section>
+      <% end %>
+    </div>
 
     <% if @recipe.notes.present? %>
       <section class="mb-6 bg-yellow-50 p-4 rounded-lg">
         <h2 class="font-semibold text-xl mb-2">Notes</h2>
         <p class="text-gray-700"><%= simple_format(@recipe.notes) %></p>
       </section>
+    <% end %>
+
+    <% if @recipe.documents.attached? %>
+      <section class="mb-6 no-print">
+        <h2 class="font-semibold text-xl mb-3">Documents</h2>
+        <ul class="space-y-2">
+          <% @recipe.documents.each do |doc| %>
+            <li class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+              <%= link_to doc.filename, rails_blob_path(doc, disposition: "attachment"), class: "text-emerald-600 hover:underline" %>
+              <span class="text-xs text-gray-400">(<%= number_to_human_size(doc.byte_size) %>)</span>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <% if @recipe.source_url.present? %>
+      <footer class="print-footer hidden">
+        Source: <%= @recipe.source_url %>
+      </footer>
     <% end %>
   </article>
 </div>
