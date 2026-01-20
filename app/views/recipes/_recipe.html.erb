@@ -1,0 +1,28 @@
+<%= link_to recipe_path(recipe), class: "block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden" do %>
+  <div class="p-4">
+    <h2 class="font-semibold text-lg text-gray-900 mb-2"><%= recipe.title %></h2>
+    
+    <% if recipe.rating.present? %>
+      <div class="mb-2">
+        <% recipe.rating.times do %><span class="text-yellow-400 text-sm">★</span><% end %>
+        <% (5 - recipe.rating).times do %><span class="text-gray-300 text-sm">★</span><% end %>
+      </div>
+    <% end %>
+
+    <% if recipe.description.present? %>
+      <p class="text-gray-600 text-sm mb-3 line-clamp-2"><%= recipe.description %></p>
+    <% end %>
+
+    <div class="flex gap-3 text-xs text-gray-500">
+      <% if recipe.total_time.positive? %>
+        <span><%= recipe.total_time %> min</span>
+      <% end %>
+      <% if recipe.servings.present? %>
+        <span><%= recipe.servings %> servings</span>
+      <% end %>
+      <% if recipe.ingredients.any? %>
+        <span><%= recipe.ingredients.count %> ingredients</span>
+      <% end %>
+    </div>
+  </div>
+<% end %>

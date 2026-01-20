@@ -1,0 +1,8 @@
+<div class="ingredient-fields flex gap-2 items-center">
+  <%= form.hidden_field :_destroy %>
+  <%= form.hidden_field :position %>
+  <%= form.number_field :quantity, step: "any", min: 0, placeholder: "Qty", class: "w-20 rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm" %>
+  <%= form.text_field :unit, placeholder: "Unit", class: "w-24 rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm" %>
+  <%= form.text_field :name, placeholder: "Ingredient name", class: "flex-1 rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm" %>
+  <button type="button" onclick="removeIngredient(this)" class="text-red-500 hover:text-red-700 text-xl">&times;</button>
+</div>

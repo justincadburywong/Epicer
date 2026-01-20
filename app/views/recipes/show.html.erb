@@ -1,0 +1,79 @@
+<div class="w-full max-w-4xl">
+  <div class="mb-6">
+    <%= link_to "← Back to recipes", recipes_path, class: "text-emerald-600 hover:text-emerald-700" %>
+  </div>
+
+  <article class="bg-white rounded-lg shadow-md p-6">
+    <header class="mb-6">
+      <div class="flex justify-between items-start">
+        <h1 class="font-bold text-3xl"><%= @recipe.title %></h1>
+        <div class="flex gap-2">
+          <%= link_to "Edit", edit_recipe_path(@recipe), class: "bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded" %>
+          <%= button_to "Delete", @recipe, method: :delete, data: { turbo_confirm: "Are you sure?" }, class: "bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded" %>
+        </div>
+      </div>
+
+      <% if @recipe.rating.present? %>
+        <div class="mt-2">
+          <% @recipe.rating.times do %><span class="text-yellow-400">★</span><% end %>
+          <% (5 - @recipe.rating).times do %><span class="text-gray-300">★</span><% end %>
+        </div>
+      <% end %>
+
+      <div class="flex gap-4 mt-3 text-sm text-gray-600">
+        <% if @recipe.prep_time.present? %>
+          <span>Prep: <%= @recipe.prep_time %> min</span>
+        <% end %>
+        <% if @recipe.cook_time.present? %>
+          <span>Cook: <%= @recipe.cook_time %> min</span>
+        <% end %>
+        <% if @recipe.servings.present? %>
+          <span>Servings: <%= @recipe.servings %></span>
+        <% end %>
+      </div>
+
+      <% if @recipe.source_url.present? %>
+        <p class="mt-2 text-sm">
+          Source: <%= link_to @recipe.source_url.truncate(50), @recipe.source_url, target: "_blank", class: "text-emerald-600 hover:underline" %>
+        </p>
+      <% end %>
+    </header>
+
+    <% if @recipe.description.present? %>
+      <section class="mb-6">
+        <p class="text-gray-700"><%= @recipe.description %></p>
+      </section>
+    <% end %>
+
+    <% if @recipe.ingredients.any? %>
+      <section class="mb-6">
+        <h2 class="font-semibold text-xl mb-3">Ingredients</h2>
+        <ul class="list-disc list-inside space-y-1">
+          <% @recipe.ingredients.each do |ingredient| %>
+            <li>
+              <span class="font-medium"><%= ingredient.display_quantity %></span>
+              <%= ingredient.unit %>
+              <%= ingredient.name %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
+    <% if @recipe.instructions.present? %>
+      <section class="mb-6">
+        <h2 class="font-semibold text-xl mb-3">Instructions</h2>
+        <div class="prose prose-emerald">
+          <%= simple_format(@recipe.instructions) %>
+        </div>
+      </section>
+    <% end %>
+
+    <% if @recipe.notes.present? %>
+      <section class="mb-6 bg-yellow-50 p-4 rounded-lg">
+        <h2 class="font-semibold text-xl mb-2">Notes</h2>
+        <p class="text-gray-700"><%= simple_format(@recipe.notes) %></p>
+      </section>
+    <% end %>
+  </article>
+</div>

@@ -1,0 +1,16 @@
+<div class="w-full">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="font-bold text-4xl">My Recipes</h1>
+    <%= link_to "New Recipe", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg" %>
+  </div>
+
+  <div id="recipes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @recipes.each do |recipe| %>
+      <%= render recipe %>
+    <% end %>
+  </div>
+
+  <% if @recipes.empty? %>
+    <p class="text-gray-500 text-center py-12">No recipes yet. Add your first recipe!</p>
+  <% end %>
+</div>

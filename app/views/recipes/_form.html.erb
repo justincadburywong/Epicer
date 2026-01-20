@@ -1,0 +1,101 @@
+<%= form_with model: recipe, class: "space-y-6" do |form| %>
+  <% if recipe.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <h2 class="text-red-800 font-semibold"><%= pluralize(recipe.errors.count, "error") %> prohibited this recipe from being saved:</h2>
+      <ul class="list-disc list-inside mt-2 text-red-700">
+        <% recipe.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :title, class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.text_field :title, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", required: true %>
+  </div>
+
+  <div>
+    <%= form.label :description, class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.text_area :description, rows: 3, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+  </div>
+
+  <div>
+    <%= form.label :source_url, "Source URL", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.url_field :source_url, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", placeholder: "https://..." %>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4">
+    <div>
+      <%= form.label :prep_time, "Prep Time (min)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= form.number_field :prep_time, min: 0, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+    </div>
+    <div>
+      <%= form.label :cook_time, "Cook Time (min)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= form.number_field :cook_time, min: 0, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+    </div>
+    <div>
+      <%= form.label :servings, class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= form.number_field :servings, min: 1, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+    </div>
+  </div>
+
+  <fieldset class="border border-gray-200 rounded-lg p-4">
+    <legend class="text-sm font-medium text-gray-700 px-2">Ingredients</legend>
+    <div id="ingredients" class="space-y-3">
+      <%= form.fields_for :ingredients do |ingredient_form| %>
+        <%= render "ingredient_fields", form: ingredient_form %>
+      <% end %>
+    </div>
+    <template id="ingredient-template">
+      <%= form.fields_for :ingredients, Ingredient.new, child_index: "NEW_RECORD" do |ingredient_form| %>
+        <%= render "ingredient_fields", form: ingredient_form %>
+      <% end %>
+    </template>
+    <button type="button" 
+            onclick="addIngredient()" 
+            class="mt-3 text-emerald-600 hover:text-emerald-700 text-sm font-medium">
+      + Add Ingredient
+    </button>
+  </fieldset>
+
+  <div>
+    <%= form.label :instructions, class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.text_area :instructions, rows: 8, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", placeholder: "Enter each step on a new line..." %>
+  </div>
+
+  <div>
+    <%= form.label :rating, class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.select :rating, [["★☆☆☆☆ (1)", 1], ["★★☆☆☆ (2)", 2], ["★★★☆☆ (3)", 3], ["★★★★☆ (4)", 4], ["★★★★★ (5)", 5]], { include_blank: "No rating" }, class: "rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+  </div>
+
+  <div>
+    <%= form.label :notes, class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= form.text_area :notes, rows: 3, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", placeholder: "Personal notes, tips, modifications..." %>
+  </div>
+
+  <div class="flex gap-4">
+    <%= form.submit class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg cursor-pointer" %>
+    <%= link_to "Cancel", recipes_path, class: "py-2 px-4 text-gray-600 hover:text-gray-800" %>
+  </div>
+<% end %>
+
+<script>
+  function addIngredient() {
+    const template = document.getElementById('ingredient-template');
+    const container = document.getElementById('ingredients');
+    const content = template.innerHTML.replace(/NEW_RECORD/g, new Date().getTime());
+    container.insertAdjacentHTML('beforeend', content);
+  }
+
+  function removeIngredient(button) {
+    const wrapper = button.closest('.ingredient-fields');
+    const destroyInput = wrapper.querySelector('input[name*="_destroy"]');
+    if (destroyInput) {
+      destroyInput.value = '1';
+      wrapper.style.display = 'none';
+    } else {
+      wrapper.remove();
+    }
+  }
+</script>
