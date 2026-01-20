@@ -2,6 +2,8 @@ class Recipe < ApplicationRecord
   has_many :ingredients, -> { order(:position) }, dependent: :destroy
   has_many_attached :images
   has_many_attached :documents
+  extend FriendlyId
+  friendly_id :title, use: :slugged
 
   accepts_nested_attributes_for :ingredients, allow_destroy: true, reject_if: :all_blank
 
