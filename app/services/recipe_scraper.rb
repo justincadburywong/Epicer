@@ -25,11 +25,28 @@ class RecipeScraper
         "Accept" => "text/html"
       },
       follow_redirects: true,
-      timeout: 10
+      timeout: 10,
+      ssl_ca_file: ssl_ca_file,
+      verify: ssl_verify_mode,
+      verify_peer: ssl_verify_mode
     })
     
     raise ScrapingError, "Failed to fetch page: #{response.code}" unless response.success?
     response
+  end
+
+  def ssl_ca_file
+    # Try common certificate locations
+    [
+      ENV["SSL_CERT_FILE"],
+      "/etc/ssl/cert.pem",
+      "/usr/local/etc/ca-certificates/cert.pem",
+      "/usr/local/etc/openssl@3/cert.pem"
+    ].compact.find { |f| File.exist?(f) }
+  end
+
+  def ssl_verify_mode
+    ENV["SCRAPER_SKIP_SSL_VERIFY"] == "true" ? false : true
   end
 
   def extract_json_ld(doc)
