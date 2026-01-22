@@ -3,6 +3,13 @@ class RecipesController < ApplicationController
 
   def index
     @recipes = Recipe.search(params[:query]).order(created_at: :desc)
+    
+    if params[:tag].present?
+      @recipes = @recipes.joins(:tags).where(tags: { name: params[:tag] })
+      @current_tag = params[:tag]
+    end
+    
+    @all_tags = Tag.popular.limit(20)
   end
 
   def show
@@ -144,7 +151,7 @@ class RecipesController < ApplicationController
   def recipe_params
     params.require(:recipe).permit(
       :title, :description, :instructions, :source_url,
-      :prep_time, :cook_time, :servings, :rating, :notes,
+      :prep_time, :cook_time, :servings, :rating, :notes, :tag_list,
       images: [], documents: [],
       ingredients_attributes: %i[id name quantity unit position _destroy]
     )
