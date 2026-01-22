@@ -35,8 +35,29 @@
     </div>
   <% end %>
 
+  <% if @all_tags.any? %>
+    <div class="mb-6 flex flex-wrap gap-2 items-center">
+      <span class="text-sm text-gray-500 mr-1">Tags:</span>
+      <% if @current_tag.present? %>
+        <%= link_to "All", recipes_path, class: "text-sm px-3 py-1 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300" %>
+      <% end %>
+      <% @all_tags.each do |tag| %>
+        <% if @current_tag == tag.name %>
+          <%= link_to tag.name, recipes_path, class: "text-sm px-3 py-1 rounded-full bg-emerald-600 text-white" %>
+        <% else %>
+          <%= link_to tag.name, recipes_path(tag: tag.name), class: "text-sm px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-200" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
   <%= turbo_frame_tag "recipes_list" do %>
-    <% if params[:query].present? %>
+    <% if @current_tag.present? %>
+      <p class="text-sm text-gray-500 mb-4">
+        Showing recipes tagged "<%= @current_tag %>"
+        <%= link_to "(clear)", recipes_path, class: "text-emerald-600 hover:underline" %>
+      </p>
+    <% elsif params[:query].present? %>
       <p class="text-sm text-gray-500 mb-4">
         Found <%= pluralize(@recipes.count, "recipe") %> matching "<%= params[:query] %>"
       </p>
