@@ -10,6 +10,7 @@ A personal recipe management app built with Rails 8 and Hotwire. Store, organize
 - **Image & Document Uploads** - Attach photos of your dishes and PDF documents to recipes
 - **Star Ratings & Notes** - Rate your recipes and add personal notes and modifications
 - **Search** - Quickly find recipes by keyword across titles, descriptions, and instructions
+- **Tags** - Categorize recipes with custom tags like "Winter", "Party", or "Quick Meals" for easy filtering
 - **Serving Size Adjustment** - Dynamically scale ingredient quantities for different serving sizes
 - **Print-Friendly View** - Clean two-column print layout optimized for paper
 - **Mobile Responsive** - Works great on phones and tablets
@@ -21,6 +22,7 @@ A personal recipe management app built with Rails 8 and Hotwire. Store, organize
 - As a cook, I want to adjust serving sizes so ingredient quantities scale automatically
 - As a user, I want to add personal notes to recipes so I remember my modifications
 - As a user, I want to search my recipes so I can quickly find what I want to cook
+- As a user, I want to tag recipes with categories so I can group them for occasions like parties or seasons
 - As a user, I want to print recipes so I can use them in the kitchen without a device
 
 ## Tech Stack
@@ -97,8 +99,9 @@ app/
 ├── controllers/
 │   └── recipes_controller.rb    # CRUD, import, scan actions
 ├── models/
-│   ├── recipe.rb                # Recipe with search scope
-│   └── ingredient.rb            # Ingredients with scaling
+│   ├── recipe.rb                # Recipe with search scope and tags
+│   ├── ingredient.rb            # Ingredients with scaling
+│   └── tag.rb                   # Tags for categorization
 ├── services/
 │   ├── recipe_scraper.rb        # URL scraping service
 │   └── recipe_ocr.rb            # Tesseract OCR service
@@ -108,7 +111,7 @@ app/
 │   ├── search_controller.js
 │   └── camera_controller.js
 └── views/recipes/
-    ├── index.html.erb           # Recipe list with search
+    ├── index.html.erb           # Recipe list with search and tag filtering
     ├── show.html.erb            # Recipe detail view
     ├── _form.html.erb           # Create/edit form
     ├── import.html.erb          # URL import page
