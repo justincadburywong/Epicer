@@ -49,6 +49,9 @@ Rails.application.configure do
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
 
+  # Configure Redis URL (will be set in redis.rb initializer)
+  # config.redis.url = "redis://localhost:6379/0"
+
   # Append comments with runtime information tags to SQL queries in logs.
   config.active_record.query_log_tags_enabled = true
 

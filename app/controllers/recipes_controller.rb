@@ -21,7 +21,22 @@ class RecipesController < ApplicationController
       if scraped.present?
         scraped = scraped.deep_symbolize_keys
         Rails.cache.delete("import_#{params[:import_key]}")
-        @recipe = Recipe.new(scraped.except(:ingredients))
+        @recipe = Recipe.new(scraped.except(:ingredients, :image_url))
+        
+        # Download and attach the feature image if image_url is available
+        if scraped[:image_url].present?
+          Rails.logger.info "Found image_url: #{scraped[:image_url]}"
+          downloaded_image = RecipeScraper.new(@recipe.source_url).download_image(scraped[:image_url])
+          if downloaded_image.present?
+            Rails.logger.info "Downloaded image successfully: #{downloaded_image[:filename]}"
+            @recipe.feature_image.attach(downloaded_image)
+            Rails.logger.info "Attached feature_image to recipe"
+          else
+            Rails.logger.warn "Failed to download image from #{scraped[:image_url]}"
+          end
+        else
+          Rails.logger.info "No image_url found in scraped data"
+        end
         
         scraped[:ingredients]&.each_with_index do |ing, index|
           @recipe.ingredients.build(ing.merge(position: index + 1))
@@ -118,6 +133,9 @@ class RecipesController < ApplicationController
   def scan
   end
 
+  def scan_simple
+  end
+
   def process_scan
     image_data = params[:image]
     
@@ -142,6 +160,49 @@ class RecipesController < ApplicationController
     end
   end
 
+  def process_scan_multiple
+    images_data = params[:images]
+    
+    if images_data.blank?
+      return render json: { error: "No images provided" }, status: :unprocessable_entity
+    end
+
+    begin
+      scan_key = SecureRandom.hex(8)
+      
+      # Enqueue background job for OCR processing
+      RecipeOcrJob.perform_later(images_data, scan_key)
+      
+      render json: { 
+        redirect_url: "/recipes/scan_status?scan_key=#{scan_key}",
+        message: "Processing your recipe images... This may take a moment.",
+        status: "processing"
+      }
+    rescue StandardError => e
+      Rails.logger.error("OCR job failed to start: #{e.message}")
+      render json: { error: "Failed to start image processing. Please try again." }, status: :unprocessable_entity
+    end
+  end
+
+  def scan_status
+    scan_key = params[:scan_key]
+    
+    if scan_key.blank?
+      return redirect_to recipes_path, alert: "Invalid scan session"
+    end
+    
+    # Check if processing is complete
+    result = Rails.cache.read("scan_#{scan_key}")
+    
+    if result
+      # Processing complete, redirect to recipe form
+      redirect_to new_recipe_path(scan_key: scan_key)
+    else
+      # Still processing, show status page
+      render :scan_status
+    end
+  end
+
   private
 
   def set_recipe
@@ -150,7 +211,7 @@ class RecipesController < ApplicationController
 
   def recipe_params
     params.require(:recipe).permit(
-      :title, :description, :instructions, :source_url,
+      :title, :description, :instructions, :source_url, :image_url,
       :prep_time, :cook_time, :servings, :rating, :notes, :tag_list,
       images: [], documents: [],
       ingredients_attributes: %i[id name quantity unit position _destroy]

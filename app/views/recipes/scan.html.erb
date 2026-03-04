@@ -5,12 +5,286 @@
 
   <div class="bg-white rounded-lg shadow-md p-6">
     <h1 class="font-bold text-2xl mb-4">Scan Recipe from Photo</h1>
-    <p class="text-gray-600 mb-6">Take a photo of a recipe or upload an image to extract the text automatically.</p>
+    <p class="text-gray-600 mb-6">Take multiple photos of a recipe (double-sided, multi-page) or upload images to extract the text automatically.</p>
+
+    <!-- Debug Panel - Always Visible -->
+    <div id="debug-panel" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+      <h3 class="font-semibold text-yellow-800 mb-2">🔍 Debug Info</h3>
+      <div id="debug-content" class="text-sm text-yellow-700 font-mono whitespace-pre-wrap">Debug system loading...</div>
+      <button type="button" onclick="checkAddPhotoButton()" class="mt-2 text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-2 py-1 rounded">
+        Check Add Photo Button
+      </button>
+    </div>
+
+    <!-- Simple Debug Script - Runs Immediately -->
+    <script>
+      // Debug function - works immediately
+      function debugLog(message) {
+        const debugContent = document.getElementById('debug-content')
+        if (debugContent) {
+          const timestamp = new Date().toLocaleTimeString()
+          debugContent.innerHTML += `[${timestamp}] ${message}\n`
+          debugContent.scrollTop = debugContent.scrollHeight
+        }
+      }
+      
+      // Test immediately
+      debugLog('✓ Script running!')
+      debugLog('✓ Debug function working!')
+      
+      // Test page load
+      if (document.readyState === 'loading') {
+        debugLog('Page still loading...')
+      } else {
+        debugLog('✓ Page already loaded!')
+      }
+      
+      // Wait for full load
+      window.addEventListener('load', function() {
+        debugLog('✓ Window fully loaded!')
+      })
+      
+      // Standalone camera functions (bypass Stimulus) - DEFINED IMMEDIATELY
+      window.standaloneCapture = function() {
+        debugLog('📸 STANDALONE CAPTURE STARTED!')
+        
+        const video = document.querySelector('[data-camera-target="video"]')
+        const canvas = document.querySelector('[data-camera-target="canvas"]')
+        const preview = document.querySelector('[data-camera-target="preview"]')
+        const retakeBtn = document.querySelector('[data-camera-target="retakeBtn"]')
+        const addPhotoBtn = document.querySelector('[data-camera-target="addPhotoBtn"]')
+        const submitBtn = document.querySelector('[data-camera-target="submitBtn"]')
+        const singlePhotoContainer = document.querySelector('[data-camera-target="singlePhotoContainer"]')
+        
+        debugLog('Video found: ' + !!video)
+        debugLog('Canvas found: ' + !!canvas)
+        debugLog('Preview found: ' + !!preview)
+        
+        if (!video || !canvas) {
+          debugLog('✗ Video or canvas not found!')
+          return
+        }
+        
+        debugLog('Setting canvas dimensions...')
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        
+        debugLog('Drawing video to canvas...')
+        const ctx = canvas.getContext("2d")
+        ctx.drawImage(video, 0, 0)
+        
+        debugLog('Creating image from canvas...')
+        preview.src = canvas.toDataURL("image/jpeg", 0.9)
+        preview.classList.remove("hidden")
+        
+        debugLog('Finding buttons...')
+        const retakeBtn = document.querySelector('[data-camera-target="retakeBtn"]')
+        const addPhotoBtn = document.querySelector('[data-camera-target="addPhotoBtn"]')
+        const submitBtn = document.querySelector('[data-camera-target="submitBtn"]')
+        const singlePhotoContainer = document.querySelector('[data-camera-target="singlePhotoContainer"]')
+        
+        debugLog('retakeBtn found: ' + !!retakeBtn)
+        debugLog('addPhotoBtn found: ' + !!addPhotoBtn)
+        debugLog('submitBtn found: ' + !!submitBtn)
+        debugLog('singlePhotoContainer found: ' + !!singlePhotoContainer)
+        
+        if (retakeBtn) {
+          retakeBtn.classList.remove("hidden")
+          debugLog('✓ Retake button shown!')
+        }
+        if (submitBtn) {
+          submitBtn.classList.remove("hidden")
+          debugLog('✓ Submit button shown!')
+        }
+        if (singlePhotoContainer) {
+          singlePhotoContainer.classList.remove("hidden")
+          debugLog('✓ Single photo container shown!')
+        }
+        
+        // SHOW THE ADD PHOTO BUTTON!
+        if (addPhotoBtn) {
+          addPhotoBtn.classList.remove("hidden")
+          debugLog('✓ ADD PHOTO BUTTON SHOWN!')
+        } else {
+          debugLog('✗ Add photo button not found!')
+          
+          // Try to find all buttons with addPhoto target
+          const allAddButtons = document.querySelectorAll('[data-camera-target="addPhotoBtn"]')
+          debugLog('Found ' + allAddButtons.length + ' addPhoto buttons via querySelectorAll')
+          
+          // Try to find button by text content
+          const allButtons = document.querySelectorAll('button')
+          debugLog('Total buttons found: ' + allButtons.length)
+          allButtons.forEach((btn, index) => {
+            if (btn.textContent.includes('Add Another')) {
+              debugLog('Found Add button at index ' + index + ': ' + btn.textContent)
+              btn.classList.remove("hidden")
+              debugLog('✓ ADD PHOTO BUTTON SHOWN via text search!')
+            }
+          })
+        }
+        
+        // Stop camera
+        if (window.cameraStream) {
+          window.cameraStream.getTracks().forEach(track => track.stop())
+          video.classList.add("hidden")
+        }
+        
+        debugLog('✓ Standalone capture complete!')
+      }
+      
+      // Standalone add photo function
+      window.standaloneAddPhoto = function() {
+        debugLog('➕ STANDALONE ADD PHOTO STARTED!')
+        
+        // Store current photo
+        const preview = document.querySelector('[data-camera-target="preview"]')
+        if (preview && preview.src) {
+          if (!window.capturedPhotos) {
+            window.capturedPhotos = []
+          }
+          window.capturedPhotos.push(preview.src)
+          debugLog('Photo stored. Total photos: ' + window.capturedPhotos.length)
+        }
+        
+        // Hide current preview and buttons
+        if (preview) preview.classList.add("hidden")
+        
+        const retakeBtn = document.querySelector('[data-camera-target="retakeBtn"]')
+        const addPhotoBtn = document.querySelector('[data-camera-target="addPhotoBtn"]')
+        const submitBtn = document.querySelector('[data-camera-target="submitBtn"]')
+        const singlePhotoContainer = document.querySelector('[data-camera-target="singlePhotoContainer"]')
+        
+        if (retakeBtn) retakeBtn.classList.add("hidden")
+        if (addPhotoBtn) addPhotoBtn.classList.add("hidden")
+        if (submitBtn) submitBtn.classList.add("hidden")
+        if (singlePhotoContainer) singlePhotoContainer.classList.add("hidden")
+        
+        // Show multi-photo container if we have photos
+        const multiPhotoContainer = document.querySelector('[data-camera-target="multiPhotoContainer"]')
+        const photoCount = document.querySelector('[data-camera-target="photoCount"]')
+        const clearPhotosBtn = document.querySelector('[data-camera-target="clearPhotosBtn"]')
+        
+        if (multiPhotoContainer && window.capturedPhotos.length > 0) {
+          multiPhotoContainer.classList.remove("hidden")
+          if (photoCount) photoCount.textContent = window.capturedPhotos.length
+          if (clearPhotosBtn) clearPhotosBtn.classList.remove("hidden")
+          
+          debugLog('Multi-photo container shown with ' + window.capturedPhotos.length + ' photos')
+        }
+        
+        // Restart camera for next photo
+        standaloneStartCamera()
+        
+        // Update submit function to handle background processing
+      window.standaloneSubmit = async function() {
+        debugLog('🚀 STANDALONE SUBMIT STARTED!')
+        
+        const loading = document.querySelector('[data-camera-target="loading"]')
+        const submitBtn = document.querySelector('[data-camera-target="submitBtn"]')
+        
+        if (loading) loading.classList.remove("hidden")
+        if (submitBtn) submitBtn.disabled = true
+        
+        try {
+          let imageData
+          
+          if (window.capturedPhotos && window.capturedPhotos.length > 0) {
+            // Multiple photos
+            debugLog('Submitting ' + window.capturedPhotos.length + ' photos for processing')
+            
+            const response = await fetch("/recipes/scan_multiple", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content
+              },
+              body: JSON.stringify({ images: window.capturedPhotos })
+            })
+            
+            const data = await response.json()
+            
+            if (data.error) {
+              alert(data.error)
+            } else if (data.redirect_url) {
+              debugLog('✓ Redirecting to: ' + data.redirect_url)
+              window.location.href = data.redirect_url
+            }
+          } else {
+            // Single photo
+            const preview = document.querySelector('[data-camera-target="preview"]')
+            if (preview && preview.src) {
+              imageData = preview.src
+            } else {
+              debugLog('✗ No image found to submit')
+              return
+            }
+            
+            const response = await fetch("/recipes/scan", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content
+              },
+              body: JSON.stringify({ image: imageData })
+            })
+            
+            const data = await response.json()
+            
+            if (data.error) {
+              alert(data.error)
+            } else if (data.redirect_url) {
+              debugLog('✓ Redirecting to: ' + data.redirect_url)
+              window.location.href = data.redirect_url
+            }
+          }
+        } catch (err) {
+          debugLog('✗ Submit error: ' + err.message)
+          alert("Failed to process images. Please try again.")
+        } finally {
+          if (loading) loading.classList.add("hidden")
+          if (submitBtn) submitBtn.disabled = false
+        }
+      }
+      window.standaloneStartCamera = async function() {
+        debugLog('📷 STANDALONE CAMERA START!')
+        
+        try {
+          debugLog('Requesting camera access...')
+          window.cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+          })
+          
+          const video = document.querySelector('[data-camera-target="video"]')
+          const captureBtn = document.querySelector('[data-camera-target="captureBtn"]')
+          
+          if (video) {
+            video.srcObject = window.cameraStream
+            video.classList.remove("hidden")
+          }
+          
+          if (captureBtn) captureBtn.classList.remove("hidden")
+          
+          debugLog('✓ Standalone camera started!')
+        } catch (err) {
+          debugLog('✗ Camera error: ' + err.message)
+        }
+      }
+      
+      // Test if functions are available
+      setTimeout(function() {
+        debugLog('✓ Functions loaded test:')
+        debugLog('standaloneCapture: ' + typeof window.standaloneCapture)
+        debugLog('standaloneAddPhoto: ' + typeof window.standaloneAddPhoto)
+        debugLog('standaloneStartCamera: ' + typeof window.standaloneStartCamera)
+      }, 600)
+    </script>
 
     <div data-controller="camera" class="space-y-4">
       <div class="flex flex-col sm:flex-row gap-3">
         <button type="button" 
                 data-action="click->camera#startCamera"
+                onclick="debugLog('Camera button clicked!'); standaloneStartCamera();"
                 class="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -31,6 +305,45 @@
                  data-action="change->camera#fileSelected">
         </label>
       </div>
+
+      <!-- Debug Toggle Button -->
+      <div class="text-center">
+        <button type="button" 
+                onclick="document.getElementById('debug-panel').classList.toggle('hidden')"
+                onclick="window.debugLog('Debug panel toggled')"
+                class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+          🔍 Toggle Debug
+        </button>
+      </div>
+
+      <!-- Simple Debug Script -->
+      <script>
+        window.debugLog = function(message) {
+          const debugContent = document.getElementById('debug-content')
+          const debugPanel = document.getElementById('debug-panel')
+          
+          if (debugContent) {
+            const timestamp = new Date().toLocaleTimeString()
+            debugContent.innerHTML += `[${timestamp}] ${message}\n`
+            debugContent.scrollTop = debugContent.scrollHeight
+          }
+        }
+        
+        // Test debug on page load
+        document.addEventListener('DOMContentLoaded', function() {
+          window.debugLog('Page loaded, debug system ready')
+          
+          // Test if Stimulus controller connects
+          setTimeout(function() {
+            const cameraController = document.querySelector('[data-controller*="camera"]')
+            if (cameraController) {
+              window.debugLog('Camera controller element found')
+            } else {
+              window.debugLog('Camera controller element NOT found')
+            }
+          }, 1000)
+        })
+      </script>
 
       <div class="relative bg-gray-100 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
         <video data-camera-target="video" 
@@ -66,6 +379,7 @@
         <button type="button"
                 data-camera-target="captureBtn"
                 data-action="click->camera#capture"
+                onclick="debugLog('Capture button clicked!'); debugLog('Testing standalone function: ' + typeof window.standaloneCapture); standaloneCapture();"
                 class="hidden flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
           📸 Capture Photo
         </button>
@@ -73,16 +387,53 @@
         <button type="button"
                 data-camera-target="retakeBtn"
                 data-action="click->camera#retake"
+                onclick="debugLog('Retake button clicked!')"
                 class="hidden flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg">
           ↩ Retake
         </button>
         
         <button type="button"
+                data-camera-target="addPhotoBtn"
+                data-action="click->camera#addPhoto"
+                onclick="debugLog('Add Photo button clicked!'); standaloneAddPhoto();"
+                class="hidden flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg">
+          ➕ Add Another Photo
+        </button>
+        
+        <button type="button"
+                data-camera-target="clearPhotosBtn"
+                data-action="click->camera#clearAllPhotos"
+                onclick="debugLog('Clear Photos button clicked!')"
+                class="hidden flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg">
+          🗑️ Clear All
+        </button>
+        
+        <button type="button"
                 data-camera-target="submitBtn"
                 data-action="click->camera#submit"
+                onclick="debugLog('Submit button clicked!'); standaloneSubmit();"
                 class="hidden flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
           ✨ Extract Recipe
         </button>
+      </div>
+
+      <!-- Multiple Photos Preview -->
+      <div data-camera-target="multiPhotoContainer" class="hidden">
+        <div class="mb-4">
+          <h3 class="font-semibold text-lg mb-2">Captured Photos (<span data-camera-target="photoCount">0</span>)</h3>
+          <p class="text-sm text-gray-600">Perfect for double-sided recipes or multiple pages! Add more photos or extract the recipe.</p>
+        </div>
+        <div data-camera-target="photoPreview" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+          <!-- Photos will be added here dynamically -->
+        </div>
+      </div>
+
+      <!-- Single Photo Preview (before adding to collection) -->
+      <div data-camera-target="singlePhotoContainer" class="hidden">
+        <div class="mb-4">
+          <h3 class="font-semibold text-lg mb-2">Photo Captured!</h3>
+          <p class="text-sm text-gray-600">You can extract this recipe or add more photos for double-sided/multi-page recipes.</p>
+        </div>
       </div>
 
       <div class="text-sm text-gray-500 mt-4">
@@ -92,6 +443,7 @@
           <li>Include the full recipe in the frame</li>
           <li>Avoid glare and shadows on the text</li>
           <li>Works best with printed recipes</li>
+          <li>🆕 Use multiple photos for double-sided recipes or multi-page instructions</li>
         </ul>
       </div>
     </div>

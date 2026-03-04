@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
   <head>
     <title><%= content_for(:title) || "Epicer" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -20,19 +20,35 @@
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    
+    <style>
+      @media print {
+        .print-hide {
+          display: none !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+    </style>
   </head>
 
-  <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+  <body class="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200" id="app-body">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-50">
       <div class="container mx-auto px-4 sm:px-6">
         <div class="flex justify-between items-center h-16">
           <%= link_to root_path, class: "flex items-center gap-2" do %>
             <span class="text-2xl">🍳</span>
-            <span class="font-bold text-xl text-emerald-600">Epicer</span>
+            <span class="font-bold text-xl text-emerald-600 dark:text-emerald-400">Epicer</span>
           <% end %>
           <div class="flex items-center gap-2 sm:gap-4">
-            <%= link_to "Recipes", recipes_path, class: "text-gray-600 hover:text-emerald-600 text-sm sm:text-base" %>
-            <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg" %>
+            <%= link_to "Recipes", recipes_path, class: "text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 text-sm sm:text-base" %>
+            <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white text-sm font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg" %>
+            
+            <!-- Dark Mode Toggle in Header -->
+            <button onclick="toggleDarkMode()" class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors duration-200">
+              <span id="dark-mode-icon">🌙</span>
+            </button>
           </div>
         </div>
       </div>
@@ -40,16 +56,73 @@
 
     <main class="container mx-auto pt-20 pb-8 px-4 sm:px-6">
       <% if notice.present? %>
-        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg">
+        <div class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg">
           <%= notice %>
         </div>
       <% end %>
       <% if alert.present? %>
-        <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+        <div class="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg">
           <%= alert %>
         </div>
       <% end %>
       <%= yield %>
     </main>
+    
+    <!-- Dark Mode JavaScript -->
+    <script>
+      // Dark mode functionality
+      function toggleDarkMode() {
+        const html = document.documentElement
+        const icon = document.getElementById('dark-mode-icon')
+        
+        if (html.classList.contains('dark')) {
+          // Remove dark mode
+          html.classList.remove('dark')
+          icon.textContent = '🌙'
+          localStorage.setItem('darkMode', 'false')
+        } else {
+          // Add dark mode
+          html.classList.add('dark')
+          icon.textContent = '☀️'
+          localStorage.setItem('darkMode', 'true')
+        }
+      }
+      
+      // Load preferences on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const html = document.documentElement
+        const icon = document.getElementById('dark-mode-icon')
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const savedDarkMode = localStorage.getItem('darkMode')
+        
+        // Set initial state based on saved preference or system default
+        if (savedDarkMode === 'true') {
+          html.classList.add('dark')
+          icon.textContent = '☀️'
+        } else if (savedDarkMode === 'false') {
+          html.classList.remove('dark')
+          icon.textContent = '🌙'
+        } else if (systemPrefersDark) {
+          html.classList.add('dark')
+          icon.textContent = '☀️'
+        } else {
+          html.classList.remove('dark')
+          icon.textContent = '🌙'
+        }
+        
+        // Listen for system preference changes (only if no manual preference saved)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          if (localStorage.getItem('darkMode') === null) {
+            if (e.matches) {
+              html.classList.add('dark')
+              icon.textContent = '☀️'
+            } else {
+              html.classList.remove('dark')
+              icon.textContent = '🌙'
+            }
+          }
+        })
+      })
+    </script>
   </body>
 </html>

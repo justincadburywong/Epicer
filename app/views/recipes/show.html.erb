@@ -1,15 +1,27 @@
 <div class="w-full max-w-4xl">
   <div class="mb-6 flex justify-between items-center no-print">
     <%= link_to "← Back to recipes", recipes_path, class: "text-emerald-600 hover:text-emerald-700" %>
-    <button onclick="window.print()" class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-      </svg>
-      Print Recipe
-    </button>
+    <div class="flex gap-3">
+      <!-- Cook Mode Toggle for Recipe -->
+      <button onclick="toggleRecipeCookMode()" id="recipe-cook-mode-btn" class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg">
+        <span id="recipe-cook-mode-icon">👨‍🍳</span>
+        <span id="recipe-cook-mode-text">Cook Mode</span>
+      </button>
+      <button onclick="window.print()" class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+        </svg>
+        Print Recipe
+      </button>
+    </div>
   </div>
 
-  <article class="bg-white rounded-lg shadow-md p-6">
+  <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <% if @recipe.feature_image.attached? %>
+      <div class="mb-6 print-hide">
+        <%= image_tag @recipe.feature_image, class: "w-full rounded-lg shadow-md", alt: @recipe.title %>
+      </div>
+    <% end %>
     <header class="mb-6">
       <div class="flex justify-between items-start">
         <h1 class="font-bold text-3xl"><%= @recipe.title %></h1>
@@ -152,3 +164,85 @@
     <% end %>
   </article>
 </div>
+
+<!-- Recipe Cook Mode JavaScript -->
+<script>
+  let wakeLock = null;
+  
+  async function toggleRecipeCookMode() {
+    const body = document.getElementById('app-body')
+    const btn = document.getElementById('recipe-cook-mode-btn')
+    const icon = document.getElementById('recipe-cook-mode-icon')
+    const text = document.getElementById('recipe-cook-mode-text')
+    
+    if (body.classList.contains('recipe-cook-mode')) {
+      // Remove recipe cook mode
+      body.classList.remove('recipe-cook-mode')
+      body.style.removeProperty('filter')
+      btn.classList.remove('bg-red-500', 'hover:bg-red-600')
+      btn.classList.add('bg-orange-500', 'hover:bg-orange-600')
+      icon.textContent = '👨‍🍳'
+      text.textContent = 'Cook Mode'
+      
+      // Release wake lock
+      if (wakeLock) {
+        await wakeLock.release()
+        wakeLock = null
+        console.log('Wake lock released')
+      }
+    } else {
+      // Add recipe cook mode
+      body.classList.add('recipe-cook-mode')
+      body.style.filter = 'brightness(1.3) contrast(1.2) saturate(1.1)'
+      btn.classList.remove('bg-orange-500', 'hover:bg-orange-600')
+      btn.classList.add('bg-red-500', 'hover:bg-red-600')
+      icon.textContent = '🍳'
+      text.textContent = 'Exit Cook Mode'
+      
+      // Request wake lock to prevent screen from sleeping
+      try {
+        wakeLock = await navigator.wakeLock.request('screen')
+        console.log('Wake lock active')
+      } catch (err) {
+        console.log(`Wake lock error: ${err.name}, ${err.message}`)
+        // Fallback: show notification that wake lock isn't available
+        if (err.name === 'NotAllowedError') {
+          alert('Cook mode requires permission to prevent screen from sleeping. Please enable screen wake lock in your browser settings.')
+        } else if (err.name === 'NotSupportedError') {
+          console.log('Wake lock not supported on this device/browser')
+        }
+      }
+    }
+  }
+  
+  // Release wake lock when page becomes hidden
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'hidden' && wakeLock) {
+      await wakeLock.release()
+      wakeLock = null
+      console.log('Wake lock released on page hide')
+    } else if (document.visibilityState === 'visible' && document.getElementById('app-body').classList.contains('recipe-cook-mode')) {
+      // Re-request wake lock when page becomes visible again
+      try {
+        wakeLock = await navigator.wakeLock.request('screen')
+        console.log('Wake lock re-acquired on page show')
+      } catch (err) {
+        console.log(`Wake lock re-acquire error: ${err.name}, ${err.message}`)
+      }
+    }
+  })
+  
+  // Auto-disable cook mode when leaving page
+  window.addEventListener('beforeunload', async function() {
+    const body = document.getElementById('app-body')
+    if (body.classList.contains('recipe-cook-mode')) {
+      body.classList.remove('recipe-cook-mode')
+      body.style.removeProperty('filter')
+    }
+    if (wakeLock) {
+      await wakeLock.release()
+      wakeLock = null
+      console.log('Wake lock released on page unload')
+    }
+  })
+</script>

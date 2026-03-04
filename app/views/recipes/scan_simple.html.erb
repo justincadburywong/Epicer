@@ -1,0 +1,383 @@
+<div class="w-full max-w-2xl mx-auto">
+  <div class="mb-6">
+    <%= link_to "← Back to recipes", recipes_path, class: "text-emerald-600 hover:text-emerald-700" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h1 class="font-bold text-2xl mb-4">Scan Recipe from Photo</h1>
+    <p class="text-gray-600 mb-6">Take multiple photos of a recipe (double-sided, multi-page) or upload images to extract the text automatically.</p>
+
+    <!-- Simple Debug Panel -->
+    <div id="debug-panel" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+      <h3 class="font-semibold text-yellow-800 mb-2">🔍 Debug Info</h3>
+      <div id="debug-content" class="text-sm text-yellow-700 font-mono whitespace-pre-wrap">Debug system loading...</div>
+    </div>
+
+    <!-- Simple Script - No Stimulus, No Timeouts -->
+    <script>
+      function debugLog(message) {
+        const debugContent = document.getElementById('debug-content')
+        if (debugContent) {
+          const timestamp = new Date().toLocaleTimeString()
+          debugContent.innerHTML += `[${timestamp}] ${message}\n`
+          debugContent.scrollTop = debugContent.scrollHeight
+        }
+      }
+      
+      debugLog('✓ Simple scan page loaded!')
+      
+      // Global photo storage
+      let capturedPhotos = []
+      let currentPhoto = null
+      let cameraStream = null
+      
+      // Simple camera functions
+      async function startCamera() {
+        debugLog('📷 Starting camera...')
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+          })
+          
+          const video = document.getElementById('video')
+          const captureBtn = document.getElementById('captureBtn')
+          const placeholder = document.getElementById('placeholder')
+          
+          video.srcObject = cameraStream
+          video.classList.remove("hidden")
+          placeholder.classList.add("hidden")
+          captureBtn.classList.remove("hidden")
+          
+          debugLog('✓ Camera started successfully!')
+        } catch (err) {
+          debugLog('✗ Camera error: ' + err.message)
+          alert("Could not access camera. Please use file upload instead.")
+        }
+      }
+      
+      function capturePhoto() {
+        debugLog('📸 Capturing photo...')
+        
+        const video = document.getElementById('video')
+        const canvas = document.getElementById('canvas')
+        const preview = document.getElementById('preview')
+        const retakeBtn = document.getElementById('retakeBtn')
+        const addPhotoBtn = document.getElementById('addPhotoBtn')
+        const submitBtn = document.getElementById('submitBtn')
+        const singlePhotoContainer = document.getElementById('singlePhotoContainer')
+        
+        if (!video || !canvas) {
+          debugLog('✗ Video or canvas not found!')
+          return
+        }
+        
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        
+        const ctx = canvas.getContext("2d")
+        ctx.drawImage(video, 0, 0)
+        
+        currentPhoto = canvas.toDataURL("image/jpeg", 0.9)
+        preview.src = currentPhoto
+        preview.classList.remove("hidden")
+        
+        // Show all buttons
+        retakeBtn.classList.remove("hidden")
+        addPhotoBtn.classList.remove("hidden")
+        submitBtn.classList.remove("hidden")
+        singlePhotoContainer.classList.remove("hidden")
+        
+        // Stop camera
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop())
+          video.classList.add("hidden")
+        }
+        
+        debugLog('✓ Photo captured! Add Photo button should be visible.')
+      }
+      
+      function addPhoto() {
+        debugLog('➕ Adding photo to collection...')
+        
+        if (currentPhoto) {
+          capturedPhotos.push(currentPhoto)
+          debugLog('Photo stored. Total photos: ' + capturedPhotos.length)
+          updatePhotoPreview()
+        }
+        
+        // Reset for next photo
+        resetForNewPhoto()
+        startCamera()
+      }
+      
+      function updatePhotoPreview() {
+        const multiPhotoContainer = document.getElementById('multiPhotoContainer')
+        const photoCount = document.getElementById('photoCount')
+        const photoPreview = document.getElementById('photoPreview')
+        
+        if (capturedPhotos.length > 0) {
+          multiPhotoContainer.classList.remove("hidden")
+          photoCount.textContent = capturedPhotos.length
+          
+          photoPreview.innerHTML = ''
+          capturedPhotos.forEach((photo, index) => {
+            const photoDiv = document.createElement("div")
+            photoDiv.className = "relative group"
+            photoDiv.innerHTML = `
+              <img src="${photo}" class="w-full h-32 object-cover rounded-lg">
+              <div class="text-xs text-gray-500 mt-1">Photo ${index + 1}</div>
+            `
+            photoPreview.appendChild(photoDiv)
+          })
+        }
+      }
+      
+      function resetForNewPhoto() {
+        const preview = document.getElementById('preview')
+        const retakeBtn = document.getElementById('retakeBtn')
+        const addPhotoBtn = document.getElementById('addPhotoBtn')
+        const submitBtn = document.getElementById('submitBtn')
+        const singlePhotoContainer = document.getElementById('singlePhotoContainer')
+        
+        preview.classList.add("hidden")
+        retakeBtn.classList.add("hidden")
+        submitBtn.classList.add("hidden")
+        singlePhotoContainer.classList.add("hidden")
+        
+        // Keep add photo button if we have photos
+        if (capturedPhotos.length > 0) {
+          addPhotoBtn.classList.remove("hidden")
+        }
+      }
+      
+      function retakePhoto() {
+        debugLog('↩ Retaking photo...')
+        resetForNewPhoto()
+        startCamera()
+      }
+      
+      async function submitPhotos() {
+        debugLog('🚀 Submitting photos...')
+        
+        const loading = document.getElementById('loading')
+        const submitBtn = document.getElementById('submitBtn')
+        
+        loading.classList.remove("hidden")
+        submitBtn.disabled = true
+        
+        try {
+          let response
+          
+          if (capturedPhotos.length > 0) {
+            // Multiple photos
+            debugLog('Submitting ' + capturedPhotos.length + ' photos')
+            
+            // Add current photo if exists
+            if (currentPhoto) {
+              capturedPhotos.push(currentPhoto)
+            }
+            
+            response = await fetch("/recipes/scan_multiple", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
+              },
+              body: JSON.stringify({ images: capturedPhotos })
+            })
+          } else {
+            // Single photo
+            debugLog('Submitting single photo')
+            response = await fetch("/recipes/scan", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
+              },
+              body: JSON.stringify({ image: currentPhoto })
+            })
+          }
+          
+          const data = await response.json()
+          
+          if (data.error) {
+            alert(data.error)
+          } else if (data.redirect_url) {
+            debugLog('✓ Redirecting to: ' + data.redirect_url)
+            window.location.href = data.redirect_url
+          }
+        } catch (err) {
+          debugLog('✗ Submit error: ' + err.message)
+          alert("Failed to process images. Please try again.")
+        } finally {
+          loading.classList.add("hidden")
+          submitBtn.disabled = false
+        }
+      }
+      
+      function clearAllPhotos() {
+        debugLog('🗑️ Clearing all photos...')
+        capturedPhotos = []
+        currentPhoto = null
+        
+        document.getElementById('multiPhotoContainer').classList.add("hidden")
+        document.getElementById('photoPreview').innerHTML = ""
+        document.getElementById('addPhotoBtn').classList.add("hidden")
+        document.getElementById('clearPhotosBtn').classList.add("hidden")
+        document.getElementById('singlePhotoContainer').classList.add("hidden")
+        
+        resetForNewPhoto()
+        startCamera()
+      }
+      
+      // File upload handling
+      function handleFileSelect(event) {
+        debugLog('📁 File selected...')
+        const file = event.target.files[0]
+        if (file) {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            currentPhoto = e.target.result
+            const preview = document.getElementById('preview')
+            preview.src = currentPhoto
+            preview.classList.remove("hidden")
+            
+            // Show buttons
+            document.getElementById('retakeBtn').classList.remove("hidden")
+            document.getElementById('addPhotoBtn').classList.remove("hidden")
+            document.getElementById('submitBtn').classList.remove("hidden")
+            document.getElementById('singlePhotoContainer').classList.remove("hidden")
+            
+            debugLog('✓ File loaded successfully!')
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+    </script>
+
+    <!-- Camera/Upload Section -->
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" 
+                onclick="debugLog('Camera button clicked!'); startCamera();"
+                class="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          Use Camera
+        </button>
+        
+        <label class="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          Upload Image
+          <input type="file" 
+                 accept="image/*" 
+                 class="hidden" 
+                 onchange="handleFileSelect(event)">
+        </label>
+      </div>
+
+      <!-- Camera/Preview Area -->
+      <div class="relative bg-gray-100 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
+        <video id="video" 
+               autoplay 
+               playsinline 
+               class="hidden w-full max-h-[400px] object-contain"></video>
+        
+        <canvas id="canvas" class="hidden"></canvas>
+        
+        <img id="preview" 
+             class="hidden w-full max-h-[400px] object-contain"
+             alt="Preview">
+        
+        <div id="placeholder" class="text-gray-400 text-center p-8">
+          <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p>Use camera or upload an image of a recipe</p>
+        </div>
+
+        <div id="loading" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
+          <div class="text-center">
+            <svg class="animate-spin h-10 w-10 text-emerald-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-600">Processing image...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="flex gap-3">
+        <button id="captureBtn"
+                type="button"
+                onclick="debugLog('Capture button clicked!'); capturePhoto();"
+                class="hidden flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
+          📸 Capture Photo
+        </button>
+        
+        <button id="retakeBtn"
+                type="button"
+                onclick="debugLog('Retake button clicked!'); retakePhoto();"
+                class="hidden flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg">
+          ↩ Retake
+        </button>
+        
+        <button id="addPhotoBtn"
+                type="button"
+                onclick="debugLog('Add Photo button clicked!'); addPhoto();"
+                class="hidden flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg">
+          ➕ Add Another Photo
+        </button>
+        
+        <button id="clearPhotosBtn"
+                type="button"
+                onclick="debugLog('Clear Photos button clicked!'); clearAllPhotos();"
+                class="hidden flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg">
+          🗑️ Clear All
+        </button>
+        
+        <button id="submitBtn"
+                type="button"
+                onclick="debugLog('Submit button clicked!'); submitPhotos();"
+                class="hidden flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
+          ✨ Extract Recipe
+        </button>
+      </div>
+
+      <!-- Multiple Photos Preview -->
+      <div id="multiPhotoContainer" class="hidden">
+        <div class="mb-4">
+          <h3 class="font-semibold text-lg mb-2">Captured Photos (<span id="photoCount">0</span>)</h3>
+          <p class="text-sm text-gray-600">Perfect for double-sided recipes or multiple pages! Add more photos or extract the recipe.</p>
+        </div>
+        <div id="photoPreview" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+          <!-- Photos will be added here dynamically -->
+        </div>
+      </div>
+
+      <!-- Single Photo Preview -->
+      <div id="singlePhotoContainer" class="hidden">
+        <div class="mb-4">
+          <h3 class="font-semibold text-lg mb-2">Photo Captured!</h3>
+          <p class="text-sm text-gray-600">You can extract this recipe or add more photos for double-sided/multi-page recipes.</p>
+        </div>
+      </div>
+
+      <div class="text-sm text-gray-500 mt-4">
+        <p class="font-medium mb-1">Tips for best results:</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Ensure good lighting and clear focus</li>
+          <li>Include full recipe in the frame</li>
+          <li>Avoid glare and shadows on the text</li>
+          <li>Works best with printed recipes</li>
+          <li>🆕 Use multiple photos for double-sided recipes or multi-page instructions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

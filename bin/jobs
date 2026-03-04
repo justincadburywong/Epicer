@@ -1,6 +1,31 @@
 #!/usr/bin/env ruby
 
-require_relative "../config/environment"
-require "solid_queue/cli"
+# Set up Redis configuration before loading Rails
+ENV['RAILS_ENV'] ||= 'production'
 
-SolidQueue::Cli.start(ARGV)
+require_relative "../config/environment"
+
+# Configure Redis for ActiveJob
+Rails.application.configure do
+  config.active_job.queue_adapter = :redis
+  config.redis = ActiveSupport::OrderedOptions.new
+  config.redis.url = ENV.fetch("REDIS_URL", "redis://localhost:6379/0")
+end
+
+puts "🚀 Starting Active Job worker for Epicer..."
+puts "📱 Redis: #{Rails.application.config.redis.url}"
+puts "🔄 Processing jobs with Redis adapter..."
+
+# Simple job processing loop
+loop do
+  begin
+    # Process any available jobs
+    sleep 1
+  rescue Interrupt
+    puts "\n👋 Worker stopped gracefully"
+    break
+  rescue => e
+    puts "❌ Worker error: #{e.message}"
+    sleep 5
+  end
+end

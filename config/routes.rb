@@ -5,6 +5,9 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Debug endpoint for client-side logging
+  post "debug_log" => "application#debug_log"
+
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
@@ -17,7 +20,10 @@ Rails.application.routes.draw do
       get :import
       post :import
       get :scan
+      get :scan_simple
+      get :scan_status
       post :scan, action: :process_scan
+      post :scan_multiple, action: :process_scan_multiple
     end
     member do
       delete :purge_image
