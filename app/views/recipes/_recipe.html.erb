@@ -1,7 +1,7 @@
 <%= link_to recipe_path(recipe), data: { turbo_frame: "_top" }, class: "block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden" do %>
-  <% if recipe.feature_image.attached? %>
+  <% if recipe.display_image.present? %>
     <div class="h-48 bg-gray-100">
-      <%= image_tag recipe.feature_image, class: "w-full h-full object-cover", alt: recipe.title %>
+      <%= image_tag recipe.display_image, class: "w-full h-full object-cover", alt: recipe.title %>
     </div>
   <% end %>
   <div class="p-4">

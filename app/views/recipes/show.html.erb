@@ -17,9 +17,9 @@
   </div>
 
   <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-    <% if @recipe.feature_image.attached? %>
+    <% if @recipe.display_image.present? %>
       <div class="mb-6 print-hide">
-        <%= image_tag @recipe.feature_image, class: "w-full rounded-lg shadow-md", alt: @recipe.title %>
+        <%= image_tag @recipe.display_image, class: "w-full rounded-lg shadow-md", alt: @recipe.title %>
       </div>
     <% end %>
     <header class="mb-6">

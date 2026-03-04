@@ -37,4 +37,12 @@ class Recipe < ApplicationRecord
   def total_time
     (prep_time || 0) + (cook_time || 0)
   end
+
+  def display_image
+    if feature_image.attached?
+      feature_image
+    else
+      images.first&.blob
+    end
+  end
 end
