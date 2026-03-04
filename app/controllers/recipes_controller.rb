@@ -23,20 +23,8 @@ class RecipesController < ApplicationController
         Rails.cache.delete("import_#{params[:import_key]}")
         @recipe = Recipe.new(scraped.except(:ingredients, :image_url))
         
-        # Download and attach the feature image if image_url is available
-        if scraped[:image_url].present?
-          Rails.logger.info "Found image_url: #{scraped[:image_url]}"
-          downloaded_image = RecipeScraper.new(@recipe.source_url).download_image(scraped[:image_url])
-          if downloaded_image.present?
-            Rails.logger.info "Downloaded image successfully: #{downloaded_image[:filename]}"
-            @recipe.feature_image.attach(downloaded_image)
-            Rails.logger.info "Attached feature_image to recipe"
-          else
-            Rails.logger.warn "Failed to download image from #{scraped[:image_url]}"
-          end
-        else
-          Rails.logger.info "No image_url found in scraped data"
-        end
+        # Store image_url in session for attachment after recipe is saved
+        session[:pending_image_url] = scraped[:image_url] if scraped[:image_url].present?
         
         scraped[:ingredients]&.each_with_index do |ing, index|
           @recipe.ingredients.build(ing.merge(position: index + 1))
@@ -96,6 +84,19 @@ class RecipesController < ApplicationController
     @recipe = Recipe.new(recipe_params)
 
     if @recipe.save
+      # Attach feature image if there's a pending image_url from session
+      if session[:pending_image_url].present?
+        Rails.logger.info "Attaching pending image: #{session[:pending_image_url]}"
+        downloaded_image = RecipeScraper.new(@recipe.source_url).download_image(session[:pending_image_url])
+        if downloaded_image.present?
+          @recipe.feature_image.attach(downloaded_image)
+          Rails.logger.info "Successfully attached feature_image to recipe #{@recipe.id}"
+        else
+          Rails.logger.warn "Failed to download pending image from #{session[:pending_image_url]}"
+        end
+        session.delete(:pending_image_url)
+      end
+      
       redirect_to @recipe, notice: "Recipe was successfully created."
     else
       render :new, status: :unprocessable_entity
