@@ -45,4 +45,10 @@ class Recipe < ApplicationRecord
       images.first&.blob
     end
   end
+
+  def display_image_variant(size = 400)
+    if display_image.present?
+      display_image.variant(resize_to_fill: [size, size], gravity: 'Center', crop: 'Center')
+    end
+  end
 end

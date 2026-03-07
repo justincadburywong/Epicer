@@ -23,41 +23,19 @@ class RecipeOcr
     
     variants = []
     
-    # Variant 1: Enhanced grayscale with contrast
+    # Variant 1: Fast grayscale with basic enhancement
     variant1 = original.clone
     variant1.combine_options do |c|
       c.colorspace "Gray"
       c.contrast
       c.normalize
-      c.sharpen "0x1"
-      c.density 300
-      c.resize "200%"  # Upscale for better OCR
-      c.unsharp "0x1.5+1.5+0.02"
+      c.density 150  # Reduced from 300 for faster processing
+      c.resize "150%"  # Reduced from 200%
     end
     variants << variant1
     
-    # Variant 2: Aggressive preprocessing for difficult text
-    variant2 = original.clone
-    variant2.combine_options do |c|
-      c.colorspace "Gray"
-      c.contrast_stretch "0%x1%"
-      c.normalize
-      c.threshold "65%"
-      c.density 300
-      c.resize "250%"
-      c.deskew "40%"
-    end
-    variants << variant2
-    
-    # Variant 3: Gentle preprocessing for clean text
-    variant3 = original.clone
-    variant3.combine_options do |c|
-      c.colorspace "Gray"
-      c.contrast
-      c.density 300
-      c.resize "150%"
-    end
-    variants << variant3
+    # Variant 2: Only create if first variant doesn't work well (lazy evaluation)
+    # We'll create this only if needed in the OCR method
     
     variants
   end
@@ -65,19 +43,51 @@ class RecipeOcr
   def perform_ocr_with_fallback(images)
     results = []
     
-    # Try each variant with different OCR configurations
-    images.each_with_index do |image, index|
-      # Configuration 1: Standard
-      text1 = perform_ocr(image, "eng", nil)
-      results << { text: text1, confidence: calculate_confidence(text1), variant: "#{index}-1" } if text1.present?
+    # Try first variant with standard configuration first
+    image = images.first
+    text1 = perform_ocr(image, "eng", nil)
+    confidence1 = calculate_confidence(text1)
+    results << { text: text1, confidence: confidence1, variant: "0-1" } if text1.present?
+    
+    # Early exit if we get good results (confidence > 0.3)
+    if confidence1 > 0.3
+      Rails.logger.info "OCR: Early exit with confidence #{confidence1}"
+      return text1
+    end
+    
+    # Try custom config on first variant
+    custom_config = {
+      tessedit_char_whitelist: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,()-/°¼½¾⅓⅔⅛⅙⅕⅖⅗⅘⅚\n\s",
+      tessedit_pageseg_mode: "6"
+    }
+    text2 = perform_ocr(image, "eng", custom_config)
+    confidence2 = calculate_confidence(text2)
+    results << { text: text2, confidence: confidence2, variant: "0-2" } if text2.present?
+    
+    # Early exit if we get good results
+    if confidence2 > 0.3
+      Rails.logger.info "OCR: Early exit with confidence #{confidence2}"
+      return text2
+    end
+    
+    # Only create and try second variant if needed
+    if confidence1 < 0.2 && confidence2 < 0.2
+      Rails.logger.info "OCR: Creating second variant due to low confidence"
+      original = MiniMagick::Image.read(@image)
+      variant2 = original.clone
+      variant2.combine_options do |c|
+        c.colorspace "Gray"
+        c.contrast_stretch "0%x1%"
+        c.normalize
+        c.threshold "65%"
+        c.density 150  # Reduced from 300
+        c.resize "150%"  # Reduced from 250%
+      end
       
-      # Configuration 2: With custom config for better ingredient recognition
-      custom_config = {
-        tessedit_char_whitelist: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,()-/°¼½¾⅓⅔⅛⅙⅕⅖⅗⅘⅚\n\s",
-        tessedit_pageseg_mode: "6"  # Assume uniform text block
-      }
-      text2 = perform_ocr(image, "eng", custom_config)
-      results << { text: text2, confidence: calculate_confidence(text2), variant: "#{index}-2" } if text2.present?
+      text3 = perform_ocr(variant2, "eng", custom_config)
+      confidence3 = calculate_confidence(text3)
+      results << { text: text3, confidence: confidence3, variant: "1-2" } if text3.present?
+      variant2.destroy!
     end
     
     # Return the result with highest confidence
@@ -138,6 +148,18 @@ class RecipeOcr
   def parse_recipe_text(text)
     lines = text.split("\n").map(&:strip).reject(&:empty?)
     
+    # Try layout-based parsing first, fall back to section-based parsing
+    if lines.length > 5  # Only use layout parsing for substantial content
+      layout_result = parse_by_layout(lines)
+      # Check if we have valid results (arrays with content)
+      ingredients_valid = layout_result[:ingredients].is_a?(Array) && layout_result[:ingredients].any?
+      instructions_valid = layout_result[:instructions].is_a?(String) && layout_result[:instructions].length > 10
+      if ingredients_valid && instructions_valid
+        Rails.logger.info "OCR: Used layout-based parsing"
+        return layout_result
+      end
+    end
+    
     # Enhanced parsing with better pattern recognition
     result = {
       title: extract_title(lines),
@@ -152,6 +174,134 @@ class RecipeOcr
     result[:instructions] = post_process_instructions(result[:instructions])
     
     result
+  end
+
+  def parse_by_layout(lines)
+    # Layout-based parsing assumes:
+    # - Ingredients are at the top or on the left side
+    # - Instructions are at the bottom or on the right side
+    # - Title is usually the first line
+    
+    title = lines.first
+    
+    # Identify ingredient-like lines (contain measurements, quantities, etc.)
+    ingredient_patterns = [
+      /^\d+\s*(?:cup|cups|tablespoon|tablespoons|teaspoon|teaspoons|oz|lb|g|kg|ml|l)/i,
+      /^\d+\/\d+\s*(?:cup|cups|tablespoon|tablespoons|teaspoon|teaspoons)/i,
+      /^\d+\s*\d+\/\d+\s*(?:cup|cups|tablespoon|tablespoons|teaspoon|teaspoons)/i,
+      /^\d+\s*(?:tbsp|tsp|oz|lb|g|kg|ml|l)/i,
+      /^\d+\s*[\d\/]+\s*(?:tbsp|tsp|oz|lb|g|kg|ml|l)/i
+    ]
+    
+    # Identify instruction-like lines (contain action verbs, time, temperature)
+    instruction_patterns = [
+      /^(?:preheat|heat|cook|bake|boil|simmer|stir|mix|add|pour|season|serve|cut|chop|dice|mince|grate|whisk|fold|beat)/i,
+      /\d+\s*(?:minutes?|hours?|°f|°c)/i,
+      /(?:until|when|as|while|for|about)/i
+    ]
+    
+    # Classify each line
+    ingredient_lines = []
+    instruction_lines = []
+    other_lines = []
+    
+    lines[1..-1].each_with_index do |line, index|
+      is_ingredient = ingredient_patterns.any? { |pattern| line.match(pattern) }
+      is_instruction = instruction_patterns.any? { |pattern| line.match(pattern) }
+      
+      if is_ingredient
+        ingredient_lines << { text: line, position: index }
+      elsif is_instruction
+        instruction_lines << { text: line, position: index }
+      else
+        other_lines << { text: line, position: index }
+      end
+    end
+    
+    # Use layout heuristics to classify ambiguous lines
+    other_lines.each do |line|
+      position = line[:position]
+      text = line[:text]
+      
+      # Lines in the first third are more likely ingredients
+      if position < lines.length / 3
+        # Check if it could be an ingredient (short, contains food words)
+        if text.length < 50 && text.split.length <= 5
+          ingredient_lines << line
+        else
+          instruction_lines << line
+        end
+      # Lines in the last third are more likely instructions
+      elsif position > lines.length * 2 / 3
+        instruction_lines << line
+      else
+        # Middle third - use content analysis
+        if text.length > 30 || text.include?("and") || text.include?("then")
+          instruction_lines << line
+        else
+          ingredient_lines << line
+        end
+      end
+    end
+    
+    # Sort by original position
+    ingredient_lines.sort_by! { |l| l[:position] }
+    instruction_lines.sort_by! { |l| l[:position] }
+    
+    # Extract text
+    ingredients = ingredient_lines.map { |l| l[:text] }
+    instructions = instruction_lines.map { |l| l[:text] }
+    
+    # Post-process with error handling
+    begin
+      processed_ingredients = post_process_ingredients(extract_ingredients_from_lines(ingredients))
+      processed_instructions = post_process_instructions(instructions.join("\n"))
+    rescue => e
+      Rails.logger.error "OCR: Layout processing error: #{e.message}"
+      # Fall back to basic processing
+      processed_ingredients = ingredients.map { |ing| { name: ing, quantity: nil, unit: nil, position: 1 } }
+      processed_instructions = instructions.join("\n")
+    end
+    
+    {
+      title: title,
+      description: nil,
+      ingredients: processed_ingredients,
+      instructions: processed_instructions,
+      raw_text: lines.join("\n")
+    }
+  end
+
+  def extract_ingredients_from_lines(lines)
+    lines.map.with_index do |line, index|
+      # Try to extract quantity, unit, and name from each line
+      if match = line.match(/^(\d+(?:\.\d+)?(?:\s*\d+\/\d+)?)\s*([a-zA-Z%]+)?\s*(.+)$/)
+        quantity_str = match[1]
+        unit = match[2]&.strip
+        name = match[3]&.strip
+        
+        # Convert quantity to float
+        quantity = if quantity_str.include?('/')
+          eval(quantity_str)  # Safe for simple fractions
+        else
+          quantity_str.to_f
+        end
+        
+        {
+          name: name,
+          quantity: quantity,
+          unit: unit,
+          position: index + 1
+        }
+      else
+        {
+          name: line,
+          quantity: nil,
+          unit: nil,
+          position: index + 1
+        }
+      end
+    end
   end
 
   def post_process_ingredients(ingredients)
@@ -187,13 +337,13 @@ class RecipeOcr
             ingredient[:quantity] = whole + fraction
             ingredient[:unit] = name.gsub(/^(\d+)\s*([\d\/]+)\s*/, '')
             ingredient[:name] = name.gsub(/^(\d+)\s*([\d\/]+)\s*/, '')
-          end
-        elsif name.match(/^(\d+\.?\d*)\s*(.+)/)        # Decimals
-          quantity_match = name.match(/^(\d+\.?\d*)\s*(.+)/)
-          if quantity_match
-            ingredient[:quantity] = quantity_match[1].to_f
-            ingredient[:unit] = name.gsub(/^(\d+\.?\d*)\s*/, '')
-            ingredient[:name] = quantity_match[2]&.strip
+          elsif name.match(/^(\d+\.?\d*)\s*(.+)/)        # Decimals
+            quantity_match = name.match(/^(\d+\.?\d*)\s*(.+)/)
+            if quantity_match
+              ingredient[:quantity] = quantity_match[1].to_f
+              ingredient[:unit] = name.gsub(/^(\d+\.?\d*)\s*/, '')
+              ingredient[:name] = quantity_match[2]&.strip
+            end
           end
         end
       end
@@ -332,6 +482,10 @@ class RecipeOcr
   end
 
   def find_section_start(lines, pattern, from_index = 0)
+    # Ensure lines is an array, not a string
+    lines = lines.split("\n") if lines.is_a?(String)
+    return nil unless lines.is_a?(Array)
+    
     lines[from_index..].each_with_index do |line, idx|
       return from_index + idx if line.match?(pattern)
     end

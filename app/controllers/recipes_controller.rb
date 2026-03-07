@@ -80,6 +80,45 @@ class RecipesController < ApplicationController
     end
   end
 
+  def crop_image
+    @recipe = Recipe.new
+    if params[:image].present?
+      # Store the uploaded image temporarily for cropping
+      @recipe.images.attach(params[:image])
+      @image_to_crop = @recipe.images.first
+      render :crop
+    else
+      redirect_to new_recipe_path, alert: "Please select an image to crop"
+    end
+  end
+
+  def process_ocr_with_crop
+    @recipe = Recipe.new(recipe_params)
+    
+    if params[:crop_coords].present? && @recipe.images.attached?
+      # Crop the image before OCR processing
+      image = @recipe.images.first
+      crop_coords = params[:crop_coords]
+      
+      # Apply crop using MiniMagick
+      cropped_image = crop_image_for_ocr(image, crop_coords)
+      
+      # Process OCR on cropped image
+      ocr_result = RecipeOcr.new(cropped_image.path).extract
+      
+      @raw_ocr_text = ocr_result[:raw_text]
+      @recipe = Recipe.new(ocr_result.except(:raw_text))
+      
+      # Replace the original image with cropped version
+      @recipe.images.detach
+      @recipe.images.attach(io: File.open(cropped_image.path), filename: "cropped_#{image.filename}")
+      
+      render :new
+    else
+      redirect_to new_recipe_path, alert: "Please crop the image first"
+    end
+  end
+
   def create
     @recipe = Recipe.new(recipe_params)
 
@@ -208,6 +247,26 @@ class RecipesController < ApplicationController
 
   def set_recipe
     @recipe = Recipe.friendly.find(params[:id])
+  end
+
+  def crop_image_for_ocr(image, crop_coords)
+    # Parse crop coordinates (x, y, width, height)
+    x = crop_coords[:x].to_i
+    y = crop_coords[:y].to_i
+    width = crop_coords[:width].to_i
+    height = crop_coords[:height].to_i
+    
+    # Open the original image
+    original_image = MiniMagick::Image.read(image.blob.service.send(:download))
+    
+    # Apply crop
+    cropped = original_image.crop("#{width}x#{height}+#{x}+#{y}")
+    
+    # Save to temporary file
+    temp_file = Tempfile.new(["cropped_ocr", ".jpg"])
+    cropped.write(temp_file.path)
+    
+    temp_file
   end
 
   def recipe_params

@@ -24,6 +24,8 @@ Rails.application.routes.draw do
       get :scan_status
       post :scan, action: :process_scan
       post :scan_multiple, action: :process_scan_multiple
+      post :crop_image
+      post :process_ocr_with_crop
     end
     member do
       delete :purge_image
