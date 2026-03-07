@@ -110,17 +110,40 @@ class RecipeScraper
     }
   end
 
+  public
+  
   def normalize_recipe(data)
     {
-      title: clean_text(data["name"]),
-      description: clean_text(data["description"]),
+      title: decode_html_entities(data["name"] || ""),
+      description: decode_html_entities(data["description"] || ""),
       source_url: @url,
-      prep_time: parse_duration(data["prepTime"]),
-      cook_time: parse_duration(data["cookTime"]),
-      servings: parse_servings(data["recipeYield"]),
+      image_url: extract_image_url(data),
+      prep_time: parse_time(data["prepTime"] || data["totalTime"]),
+      cook_time: parse_time(data["cookTime"]),
+      servings: parse_servings(data["recipeYield"] || data["recipeCuisine"]),
       instructions: normalize_instructions(data["recipeInstructions"]),
       ingredients: normalize_ingredients(data["recipeIngredient"])
     }
+  end
+
+  def decode_html_entities(text)
+    return "" if text.blank?
+    
+    # Decode common HTML entities
+    text = text.to_s
+      .gsub(/&#39;/, "'")
+      .gsub(/&quot;/, '"')
+      .gsub(/&amp;/, '&')
+      .gsub(/&lt;/, '<')
+      .gsub(/&gt;/, '>')
+      .gsub(/&nbsp;/, ' ')
+      .gsub(/&#34;/, '"')
+      .gsub(/&#38;/, '&')
+      .gsub(/&#60;/, '<')
+      .gsub(/&#62;/, '>')
+      .strip
+    
+    text
   end
 
   def clean_text(text)
@@ -128,7 +151,7 @@ class RecipeScraper
     text.to_s.strip.gsub(/\s+/, " ")
   end
 
-  def parse_duration(duration)
+  def parse_time(duration)
     return nil if duration.blank?
     
     if duration =~ /PT(\d+)H(\d+)M/
@@ -148,29 +171,47 @@ class RecipeScraper
   end
 
   def normalize_instructions(instructions)
-    return nil if instructions.blank?
-
-    steps = case instructions
-    when String
-      instructions.split(/\n+/)
-    when Array
-      instructions.flat_map do |item|
-        if item.is_a?(Hash)
-          item["text"] || item["itemListElement"]&.map { |i| i["text"] }
+    return [] if instructions.blank?
+    
+    result = if instructions.is_a?(Array)
+      instructions.map do |instruction|
+        if instruction.is_a?(Hash)
+          decode_html_entities(instruction["text"] || "")
         else
-          item.to_s
+          decode_html_entities(instruction.to_s)
         end
       end
+    elsif instructions.is_a?(String)
+      [decode_html_entities(instructions)]
     else
       []
     end
 
-    steps.compact.map { |s| clean_text(s) }.reject(&:blank?).join("\n\n")
+    result.compact.map { |s| clean_text(s) }.reject(&:blank?).join("\n\n")
   end
 
   def normalize_ingredients(ingredients)
     return [] if ingredients.blank?
     
+    if ingredients.is_a?(Array)
+      ingredients.map do |ingredient|
+        if ingredient.is_a?(Hash)
+          {
+            name: decode_html_entities(ingredient["name"] || ""),
+            quantity: parse_quantity(ingredient["quantity"]),
+            unit: decode_html_entities(ingredient["unit"] || "")
+          }
+        else
+          {
+            name: decode_html_entities(ingredient.to_s),
+            quantity: nil,
+            unit: ""
+          }
+        end
+      end
+    else
+      []
+    end
     ingredients.map do |ing|
       text = clean_text(ing)
       next if text.blank?
@@ -206,5 +247,193 @@ class RecipeScraper
     end
     
     str.to_f if str =~ /^\d/
+  end
+
+  def extract_image_url(data)
+    # Try multiple methods to find the main recipe image
+    image_url = nil
+    
+    # Method 1: Check for structured data image
+    if data["image"]
+      image_url = data["image"]
+    elsif data["thumbnailUrl"]
+      image_url = data["thumbnailUrl"]
+    end
+    
+    # Handle case where image_url is an array (multiple images)
+    if image_url.is_a?(Array)
+      # Take the first image from the array
+      image_url = image_url.first
+    end
+    
+    # Handle case where image_url is a hash (ImageObject)
+    if image_url.is_a?(Hash)
+      # Extract the URL from ImageObject
+      image_url = image_url["url"]
+    end
+    
+    # Method 2: Extract from page content (fallback)
+    if image_url.blank?
+      response = fetch_page
+      doc = Nokogiri::HTML(response.body)
+      
+      # Look for common recipe image selectors in priority order
+      image_selectors = [
+        'meta[property="og:image"]',           # Open Graph image (highest priority)
+        'meta[name="twitter:image"]',         # Twitter card image
+        '.wprm-recipe-image img',             # WP Recipe Maker image
+        '.aligncenter.size-large img',         # Main article image
+        'img[alt*="recipe"]',
+        'img[alt*="food"]', 
+        'img[class*="recipe"]',
+        'img[src*="recipe"]',
+        '.recipe-image img',
+        '.featured-image img',
+        'article img:first-of-type'
+      ]
+      
+      image_selectors.each do |selector|
+        element = doc.at(selector)
+        if element && element['src']
+          image_url = element['src']
+          break
+        elsif element && element['content']
+          image_url = element['content']
+          break
+        end
+      end
+    end
+    
+    # Clean up relative URLs
+    if image_url && image_url.is_a?(String) && !image_url.start_with?('http')
+      base_uri = URI.parse(@url)
+      image_uri = URI.join(base_uri, image_url) rescue image_url
+      image_url = image_uri.to_s
+    end
+    
+    # Test if the image is downloadable, if not try to find alternatives
+    if image_url.present?
+      test_download = try_download_simple(image_url)
+      if test_download.nil?
+        Rails.logger.warn "Primary image not downloadable, searching for alternatives..."
+        image_url = find_alternative_image
+      end
+    end
+    
+    image_url
+  end
+  
+  def find_alternative_image
+    response = fetch_page
+    doc = Nokogiri::HTML(response.body)
+    
+    # Try alternative selectors that might have more accessible images
+    alternative_selectors = [
+      'img[src*="/wp-content/"]',             # WordPress content images
+      'img[src*="/uploads/"]',                # Upload directories
+      'img[class*="attachment"]',            # WordPress attachment images
+      'img[class*="size-"]',                 # Sized images
+      '.entry-content img:first-of-type',     # First image in content
+      '.post-content img:first-of-type',      # First image in post content
+    ]
+    
+    alternative_selectors.each do |selector|
+      elements = doc.css(selector)
+      elements.each do |element|
+        if element['src']
+          alt_url = element['src']
+          # Clean up relative URLs
+          if !alt_url.start_with?('http')
+            base_uri = URI.parse(@url)
+            alt_url = URI.join(base_uri, alt_url).to_s rescue alt_url
+          end
+          
+          # Test if this alternative image is downloadable
+          test_download = try_download_simple(alt_url)
+          if test_download
+            Rails.logger.info "Found downloadable alternative image: #{alt_url}"
+            return alt_url
+          end
+        end
+      end
+    end
+    
+    Rails.logger.warn "No downloadable alternative images found"
+    nil
+  end
+  
+  public
+  
+  def download_image(image_url)
+    begin
+      Rails.logger.info "Attempting to download image from: #{image_url}"
+      
+      # Try with browser headers first
+      downloaded = try_download_with_headers(image_url)
+      return downloaded if downloaded
+      
+      # If that fails, try without headers
+      Rails.logger.info "Retrying without headers..."
+      downloaded = try_download_simple(image_url)
+      return downloaded if downloaded
+      
+      # If both fail, return nil
+      Rails.logger.warn "All download attempts failed for: #{image_url}"
+      nil
+    rescue => e
+      Rails.logger.error "Failed to download image from #{image_url}: #{e.class} - #{e.message}"
+      nil
+    end
+  end
+  
+  def try_download_with_headers(image_url)
+    uri = URI.parse(image_url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == 'https'
+    request = Net::HTTP::Get.new(uri.request_uri)
+    
+    # Add headers to mimic a browser request
+    request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    request['Accept'] = 'image/webp,image/apng,image/*,*/*;q=0.8'
+    request['Accept-Language'] = 'en-US,en;q=0.9'
+    request['Referer'] = @url
+    
+    response = http.request(request)
+    Rails.logger.info "Headers method - HTTP Response Code: #{response.code}"
+    
+    if response.code.to_i == 200
+      create_temp_file(response, uri)
+    else
+      nil
+    end
+  end
+  
+  def try_download_simple(image_url)
+    uri = URI.parse(image_url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == 'https'
+    request = Net::HTTP::Get.new(uri.request_uri)
+    
+    response = http.request(request)
+    Rails.logger.info "Simple method - HTTP Response Code: #{response.code}"
+    
+    if response.code.to_i == 200
+      create_temp_file(response, uri)
+    else
+      nil
+    end
+  end
+  
+  def create_temp_file(response, uri)
+    temp_file = Tempfile.new(['recipe_image', '.jpg'])
+    temp_file.binmode
+    temp_file.write(response.body)
+    temp_file.rewind
+    
+    {
+      io: temp_file,
+      filename: File.basename(uri.path) || 'recipe_image.jpg',
+      content_type: response['content-type'] || 'image/jpeg'
+    }
   end
 end

@@ -1,0 +1,123 @@
+<div class="w-full max-w-4xl">
+  <h1 class="font-bold text-3xl mb-6">Crop Recipe Image</h1>
+  
+  <div class="mb-6">
+    <p class="text-gray-600 mb-4">Select the area containing the recipe text to improve OCR accuracy. Drag the corners to focus on the recipe content.</p>
+    
+    <% if @image_to_crop&.attached? %>
+      <div class="bg-gray-100 rounded-lg p-4">
+        <%= image_tag @image_to_crop, id: "crop-image", class: "max-w-full mx-auto" %>
+      </div>
+      
+      <div class="mt-6">
+        <%= form_with url: process_ocr_with_crop_recipes_path, method: :post, class: "space-y-4" do |form| %>
+          <%= hidden_field_tag :crop_coords, "", id: "crop-coords" %>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <h3 class="font-medium text-gray-900 mb-2">Crop Selection</h3>
+              <div class="space-y-2">
+                <div>
+                  <%= label_tag :crop_x, "X Position", class: "block text-sm font-medium text-gray-700" %>
+                  <%= number_field_tag :crop_x, nil, id: "crop-x", class: "w-full rounded border-gray-300", min: 0 %>
+                </div>
+                <div>
+                  <%= label_tag :crop_y, "Y Position", class: "block text-sm font-medium text-gray-700" %>
+                  <%= number_field_tag :crop_y, nil, id: "crop-y", class: "w-full rounded border-gray-300", min: 0 %>
+                </div>
+                <div>
+                  <%= label_tag :crop_width, "Width", class: "block text-sm font-medium text-gray-700" %>
+                  <%= number_field_tag :crop_width, nil, id: "crop-width", class: "w-full rounded border-gray-300", min: 100 %>
+                </div>
+                <div>
+                  <%= label_tag :crop_height, "Height", class: "block text-sm font-medium text-gray-700" %>
+                  <%= number_field_tag :crop_height, nil, id: "crop-height", class: "w-full rounded border-gray-300", min: 100 %>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 class="font-medium text-gray-900 mb-2">Quick Actions</h3>
+              <div class="space-y-2">
+                <button type="button" onclick="setCropArea(0, 0, 400, 300)" 
+                        class="w-full text-left bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm">
+                  Top Left (400×300)
+                </button>
+                <button type="button" onclick="setCropArea(200, 150, 400, 300)" 
+                        class="w-full text-left bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm">
+                  Center (400×300)
+                </button>
+                <button type="button" onclick="setCropArea(0, 0, 600, 400)" 
+                        class="w-full text-left bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm">
+                  Large (600×400)
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-6">
+            <%= form.submit "Process OCR with Crop", class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg cursor-pointer" %>
+            <%= link_to "Cancel", new_recipe_path, class: "py-2 px-4 text-gray-600 hover:text-gray-800" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p class="text-red-800">No image available for cropping. Please upload an image first.</p>
+        <%= link_to "Upload Image", new_recipe_path, class: "text-emerald-600 hover:text-emerald-700" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+  let cropper;
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const image = document.getElementById('crop-image');
+    if (image) {
+      cropper = new Cropper(image, {
+        aspectRatio: NaN, // Free aspect ratio
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: true,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+      });
+      
+      // Update crop coordinates when selection changes
+      cropper.addEventListener('crop', function(event) {
+        const data = event.detail;
+        document.getElementById('crop-x').value = Math.round(data.x);
+        document.getElementById('crop-y').value = Math.round(data.y);
+        document.getElementById('crop-width').value = Math.round(data.width);
+        document.getElementById('crop-height').value = Math.round(data.height);
+        
+        // Store coordinates for form submission
+        document.getElementById('crop-coords').value = JSON.stringify({
+          x: Math.round(data.x),
+          y: Math.round(data.y),
+          width: Math.round(data.width),
+          height: Math.round(data.height)
+        });
+      });
+    }
+  });
+  
+  function setCropArea(x, y, width, height) {
+    if (cropper) {
+      cropper.setData({
+        x: x,
+        y: y,
+        width: width,
+        height: height
+      });
+    }
+  }
+</script>
