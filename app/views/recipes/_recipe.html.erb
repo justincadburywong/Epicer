@@ -1,11 +1,21 @@
 <%= link_to recipe_path(recipe), data: { turbo_frame: "_top" }, class: "block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden" do %>
   <% if recipe.display_image.present? %>
-    <div class="aspect-square w-full bg-gray-100">
-      <%= image_tag recipe.display_image, 
-                   class: "w-full h-full object-cover", 
-                   alt: recipe.title,
-                   loading: "lazy",
-                   decoding: "async" %>
+    <div class="w-full">
+      <div class="bg-gray-100 relative overflow-hidden" style="aspect-ratio: 1 / 1;">
+        <%= image_tag recipe.display_image, 
+                     class: "absolute inset-0 w-full h-full", 
+                     style: "object-fit: cover;",
+                     alt: recipe.title,
+                     loading: "lazy",
+                     decoding: "async" %>
+      </div>
+    </div>
+  <% else %>
+    <!-- Debug: No display image found -->
+    <div class="w-full">
+      <div class="bg-gray-100 flex items-center justify-center text-gray-500 text-sm relative overflow-hidden" style="aspect-ratio: 1 / 1;">
+        No Image
+      </div>
     </div>
   <% end %>
   <div class="p-4">
