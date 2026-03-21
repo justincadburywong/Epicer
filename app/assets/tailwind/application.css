@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+/* Simple dark mode overrides */
+html.dark body {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+html.dark .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .bg-emerald-50 {
+  background-color: #064e3b !important;
+}
+
+html.dark .text-emerald-700 {
+  color: #34d399 !important;
+}
