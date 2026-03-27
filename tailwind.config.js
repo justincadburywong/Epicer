@@ -6,7 +6,7 @@ module.exports = {
     "./app/javascript/**/*.{js,ts}",
     "./app/views/**/*.{html,erb}",
   ],
-  darkMode: 'class',
+  darkMode: 'media',
   theme: {
     extend: {},
   },
