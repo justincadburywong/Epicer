@@ -1,6 +1,7 @@
 require_relative "boot"
 
 require "rails/all"
+require_relative "../app/middleware/active_storage_cache_headers"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -23,8 +24,11 @@ module Epicer
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
-    
+
     # Use VIPS for image processing (faster than MiniMagick)
     config.active_storage.variant_processor = :vips
+
+    # Add cache headers to ActiveStorage responses
+    config.middleware.use ActiveStorageCacheHeaders
   end
 end
