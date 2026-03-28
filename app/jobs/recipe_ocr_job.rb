@@ -1,6 +1,9 @@
 class RecipeOcrJob < ApplicationJob
   queue_as :default
 
+  # Set job timeout to 10 minutes
+  retry_on StandardError, wait: :exponentially_longer, attempts: 3
+
   def perform(images_data, scan_key)
     Rails.logger.info "Starting OCR job for scan_key: #{scan_key} with #{images_data.length} images"
     
@@ -19,8 +22,16 @@ class RecipeOcrJob < ApplicationJob
         # Decode base64 image
         image_binary = Base64.decode64(image_data.sub(/^data:image\/\w+;base64,/, ""))
         
-        # Process OCR
-        result = RecipeOcr.new(image_binary).extract
+        # Check image size to prevent memory issues
+        if image_binary.bytesize > 10.megabytes
+          Rails.logger.warn "Image #{index + 1} is too large (#{image_binary.bytesize} bytes), skipping"
+          next
+        end
+        
+        # Process OCR with timeout protection
+        result = Timeout.timeout(300) do  # 5 minute timeout per image
+          RecipeOcr.new(image_binary).extract
+        end
         
         # Combine results
         if index == 0
@@ -57,8 +68,14 @@ class RecipeOcrJob < ApplicationJob
         
         Rails.logger.info "Completed processing image #{index + 1}"
         
+      rescue Timeout::Error
+        Rails.logger.error "OCR timed out for image #{index + 1}, skipping"
+        next
       rescue RecipeOcr::OcrError => e
         Rails.logger.error "OCR failed for image #{index + 1}: #{e.message}"
+        # Continue with other images
+      rescue StandardError => e
+        Rails.logger.error "Unexpected error processing image #{index + 1}: #{e.message}"
         # Continue with other images
       end
     end

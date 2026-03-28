@@ -23,19 +23,44 @@ class RecipeOcr
     
     variants = []
     
-    # Variant 1: Fast grayscale with basic enhancement
+    # Variant 1: Enhanced grayscale with deskewing for bent pages
     variant1 = original.clone
     variant1.combine_options do |c|
       c.colorspace "Gray"
       c.contrast
       c.normalize
-      c.density 150  # Reduced from 300 for faster processing
-      c.resize "150%"  # Reduced from 200%
+      c.deskew "40%"  # Help with bent pages
+      c.density 200  # Increased for better text clarity
+      c.resize "200%"
+      c.unsharp "0x1.5+1.5+0.02"  # Sharpen text
     end
     variants << variant1
     
-    # Variant 2: Only create if first variant doesn't work well (lazy evaluation)
-    # We'll create this only if needed in the OCR method
+    # Variant 2: Aggressive preprocessing for difficult images
+    variant2 = original.clone
+    variant2.combine_options do |c|
+      c.colorspace "Gray"
+      c.contrast_stretch "0%x1%"
+      c.normalize
+      c.deskew "40%"  # Help with bent pages
+      c.threshold "70%"  # Binarization for clear text
+      c.density 200
+      c.resize "200%"
+      c.unsharp "0x2+2+0.02"
+    end
+    variants << variant2
+    
+    # Variant 3: Conservative approach for clean images
+    variant3 = original.clone
+    variant3.combine_options do |c|
+      c.colorspace "Gray"
+      c.contrast
+      c.normalize
+      c.deskew "20%"  # Lighter deskewing
+      c.density 150
+      c.resize "150%"
+    end
+    variants << variant3
     
     variants
   end
@@ -43,51 +68,37 @@ class RecipeOcr
   def perform_ocr_with_fallback(images)
     results = []
     
-    # Try first variant with standard configuration first
-    image = images.first
-    text1 = perform_ocr(image, "eng", nil)
-    confidence1 = calculate_confidence(text1)
-    results << { text: text1, confidence: confidence1, variant: "0-1" } if text1.present?
+    # Try all variants with different configurations
+    custom_configs = [
+      nil,  # Standard config
+      {
+        tessedit_char_whitelist: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,()-/°¼½¾⅓⅔⅛⅙⅕⅖⅗⅘⅚\n\s",
+        tessedit_pageseg_mode: "6"  # Assume uniform text block
+      },
+      {
+        tessedit_char_whitelist: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,()-/°¼½¾⅓⅔⅛⅙⅕⅖⅗⅘⅚\n\s",
+        tessedit_pageseg_mode: "3"  # Fully automatic page segmentation
+      },
+      {
+        tessedit_char_whitelist: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,()-/°¼½¾⅓⅔⅛⅙⅕⅖⅗⅘⅚\n\s",
+        tessedit_pageseg_mode: "1"  # Automatic page segmentation with OSD
+      }
+    ]
     
-    # Early exit if we get good results (confidence > 0.3)
-    if confidence1 > 0.3
-      Rails.logger.info "OCR: Early exit with confidence #{confidence1}"
-      return text1
-    end
-    
-    # Try custom config on first variant
-    custom_config = {
-      tessedit_char_whitelist: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,()-/°¼½¾⅓⅔⅛⅙⅕⅖⅗⅘⅚\n\s",
-      tessedit_pageseg_mode: "6"
-    }
-    text2 = perform_ocr(image, "eng", custom_config)
-    confidence2 = calculate_confidence(text2)
-    results << { text: text2, confidence: confidence2, variant: "0-2" } if text2.present?
-    
-    # Early exit if we get good results
-    if confidence2 > 0.3
-      Rails.logger.info "OCR: Early exit with confidence #{confidence2}"
-      return text2
-    end
-    
-    # Only create and try second variant if needed
-    if confidence1 < 0.2 && confidence2 < 0.2
-      Rails.logger.info "OCR: Creating second variant due to low confidence"
-      original = MiniMagick::Image.read(@image)
-      variant2 = original.clone
-      variant2.combine_options do |c|
-        c.colorspace "Gray"
-        c.contrast_stretch "0%x1%"
-        c.normalize
-        c.threshold "65%"
-        c.density 150  # Reduced from 300
-        c.resize "150%"  # Reduced from 250%
+    images.each_with_index do |image, image_index|
+      custom_configs.each_with_index do |config, config_index|
+        text = perform_ocr(image, "eng", config)
+        if text.present?
+          confidence = calculate_confidence(text)
+          results << { text: text, confidence: confidence, variant: "#{image_index}-#{config_index}" }
+          
+          # Early exit if we get excellent results
+          if confidence > 0.4
+            Rails.logger.info "OCR: Early exit with confidence #{confidence} using variant #{image_index}-#{config_index}"
+            return text
+          end
+        end
       end
-      
-      text3 = perform_ocr(variant2, "eng", custom_config)
-      confidence3 = calculate_confidence(text3)
-      results << { text: text3, confidence: confidence3, variant: "1-2" } if text3.present?
-      variant2.destroy!
     end
     
     # Return the result with highest confidence
@@ -177,30 +188,30 @@ class RecipeOcr
   end
 
   def parse_by_layout(lines)
-    # Layout-based parsing assumes:
-    # - Ingredients are at the top or on the left side
-    # - Instructions are at the bottom or on the right side
-    # - Title is usually the first line
-    
+    # Enhanced layout-based parsing for better ingredient/instruction separation
     title = lines.first
     
-    # Identify ingredient-like lines (contain measurements, quantities, etc.)
+    # Enhanced ingredient patterns
     ingredient_patterns = [
       /^\d+\s*(?:cup|cups|tablespoon|tablespoons|teaspoon|teaspoons|oz|lb|g|kg|ml|l)/i,
       /^\d+\/\d+\s*(?:cup|cups|tablespoon|tablespoons|teaspoon|teaspoons)/i,
       /^\d+\s*\d+\/\d+\s*(?:cup|cups|tablespoon|tablespoons|teaspoon|teaspoons)/i,
       /^\d+\s*(?:tbsp|tsp|oz|lb|g|kg|ml|l)/i,
-      /^\d+\s*[\d\/]+\s*(?:tbsp|tsp|oz|lb|g|kg|ml|l)/i
+      /^\d+\s*[\d\/]+\s*(?:tbsp|tsp|oz|lb|g|kg|ml|l)/i,
+      /^(?:pinch|dash|handful|bunch|head|stalk|sprig|can|package|slice|piece)/i,
+      /^\d+\s*(?:large|medium|small)\s+(?:onion|potato|carrot|tomato|pepper|garlic|lemon|lime)/i
     ]
     
-    # Identify instruction-like lines (contain action verbs, time, temperature)
+    # Enhanced instruction patterns
     instruction_patterns = [
-      /^(?:preheat|heat|cook|bake|boil|simmer|stir|mix|add|pour|season|serve|cut|chop|dice|mince|grate|whisk|fold|beat)/i,
-      /\d+\s*(?:minutes?|hours?|°f|°c)/i,
-      /(?:until|when|as|while|for|about)/i
+      /^(?:preheat|heat|cook|bake|boil|simmer|stir|mix|add|pour|season|serve|cut|chop|dice|mince|grate|whisk|fold|beat|roast|grill|fry|sauté|blend|puree|mash|cream|fold|layer|spread|drizzle|sprinkle|garnish)/i,
+      /\d+\s*(?:minutes?|hours?|°f|°c|degrees?)/i,
+      /(?:until|when|as|while|for|about|then|next|after|once|if)/i,
+      /(?:oven|stove|pan|pot|bowl|mixer|blender|sheet|dish|rack)/i,
+      /(?:gently|carefully|slowly|quickly|thoroughly|well|evenly|lightly|heavily)/i
     ]
     
-    # Classify each line
+    # Classify each line with enhanced logic
     ingredient_lines = []
     instruction_lines = []
     other_lines = []
@@ -209,37 +220,49 @@ class RecipeOcr
       is_ingredient = ingredient_patterns.any? { |pattern| line.match(pattern) }
       is_instruction = instruction_patterns.any? { |pattern| line.match(pattern) }
       
+      # Additional heuristics for better classification
+      word_count = line.split(/\s+/).length
+      char_count = line.length
+      
       if is_ingredient
-        ingredient_lines << { text: line, position: index }
+        ingredient_lines << { text: line, position: index, confidence: 0.8 }
       elsif is_instruction
-        instruction_lines << { text: line, position: index }
+        instruction_lines << { text: line, position: index, confidence: 0.8 }
       else
-        other_lines << { text: line, position: index }
+        # Use content analysis for ambiguous lines
+        if word_count <= 6 && char_count <= 50 && !line.include?("and") && !line.include?("then")
+          # Likely ingredient (short, specific)
+          ingredient_lines << { text: line, position: index, confidence: 0.6 }
+        elsif word_count >= 8 || char_count >= 60 || line.include?("and") || line.include?("then") || line.include?("until")
+          # Likely instruction (longer, contains conjunctions)
+          instruction_lines << { text: line, position: index, confidence: 0.6 }
+        else
+          # Truly ambiguous - use position-based heuristics
+          other_lines << { text: line, position: index, confidence: 0.4 }
+        end
       end
     end
     
-    # Use layout heuristics to classify ambiguous lines
+    # Enhanced layout heuristics for ambiguous lines
     other_lines.each do |line|
       position = line[:position]
       text = line[:text]
+      total_lines = lines.length
       
-      # Lines in the first third are more likely ingredients
-      if position < lines.length / 3
-        # Check if it could be an ingredient (short, contains food words)
-        if text.length < 50 && text.split.length <= 5
-          ingredient_lines << line
+      # Position-based classification with confidence adjustment
+      if position < total_lines * 0.4  # First 40% more likely ingredients
+        if text.length < 40 && text.split.length <= 5
+          ingredient_lines << line.merge(confidence: 0.5)
         else
-          instruction_lines << line
+          instruction_lines << line.merge(confidence: 0.3)
         end
-      # Lines in the last third are more likely instructions
-      elsif position > lines.length * 2 / 3
-        instruction_lines << line
-      else
-        # Middle third - use content analysis
-        if text.length > 30 || text.include?("and") || text.include?("then")
-          instruction_lines << line
+      elsif position > total_lines * 0.6  # Last 40% more likely instructions
+        instruction_lines << line.merge(confidence: 0.5)
+      else  # Middle 20% - use content analysis
+        if text.include?("and") || text.include?("then") || text.include?("until") || text.length > 50
+          instruction_lines << line.merge(confidence: 0.4)
         else
-          ingredient_lines << line
+          ingredient_lines << line.merge(confidence: 0.3)
         end
       end
     end
