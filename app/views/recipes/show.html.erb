@@ -36,9 +36,13 @@
       </div>
 
       <% if @recipe.rating.present? %>
-        <div class="mt-2">
-          <% @recipe.rating.times do %><span class="text-yellow-400">★</span><% end %>
-          <% (5 - @recipe.rating).times do %><span class="text-gray-300">★</span><% end %>
+        <div class="mt-2" id="rating-display">
+          <% @recipe.rating.times do |i| %><span class="text-yellow-400 cursor-pointer hover:text-yellow-500" onclick="setRating(<%= i + 1 %>)">★</span><% end %>
+          <% (5 - @recipe.rating).times do |i| %><span class="text-gray-300 cursor-pointer hover:text-yellow-400" onclick="setRating(<%= @recipe.rating + i + 1 %>)">★</span><% end %>
+        </div>
+      <% else %>
+        <div class="mt-2" id="rating-display">
+          <% 5.times do |i| %><span class="text-gray-300 cursor-pointer hover:text-yellow-400" onclick="setRating(<%= i + 1 %>)">★</span><% end %>
         </div>
       <% end %>
 
@@ -61,10 +65,15 @@
       <% end %>
 
       <% if @recipe.tags.any? %>
-        <div class="mt-3 flex flex-wrap gap-2">
+        <div class="mt-3 flex flex-wrap gap-2 items-center" id="tags-container">
           <% @recipe.tags.each do |tag| %>
             <%= link_to tag.name, recipes_path(tag: tag.name), class: "inline-block bg-emerald-100 text-emerald-800 text-sm px-3 py-1 rounded-full hover:bg-emerald-200" %>
           <% end %>
+          <button onclick="showTagForm()" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-full text-sm font-bold cursor-pointer">+</button>
+        </div>
+      <% else %>
+        <div class="mt-3 flex flex-wrap gap-2 items-center" id="tags-container">
+          <button onclick="showTagForm()" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-full text-sm font-bold cursor-pointer">+</button>
         </div>
       <% end %>
     </header>
@@ -249,4 +258,138 @@
       console.log('Wake lock released on page unload')
     }
   })
+</script>
+
+<!-- Inline Tag and Rating Management -->
+<script>
+  function showTagForm() {
+    const container = document.getElementById('tags-container');
+    const existingForm = document.getElementById('tag-form');
+    
+    if (existingForm) {
+      existingForm.remove();
+      return;
+    }
+    
+    const form = document.createElement('div');
+    form.id = 'tag-form';
+    form.className = 'inline-flex items-center gap-2';
+    form.innerHTML = `
+      <input type="text" 
+             id="tag-input" 
+             placeholder="tag1, tag2, tag3" 
+             class="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500"
+             onkeypress="if(event.key === 'Enter') { addTags(); }">
+      <button onclick="addTags()" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded">Add</button>
+      <button onclick="cancelTagForm()" class="px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm rounded">Cancel</button>
+    `;
+    
+    container.appendChild(form);
+    document.getElementById('tag-input').focus();
+  }
+  
+  function cancelTagForm() {
+    const form = document.getElementById('tag-form');
+    if (form) {
+      form.remove();
+    }
+  }
+  
+  function addTags() {
+    const input = document.getElementById('tag-input');
+    const tags = input.value.trim();
+    
+    if (!tags) return;
+    
+    const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    
+    if (tagArray.length === 0) return;
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    // Send AJAX request to add tags
+    fetch(`<%= recipe_path(@recipe) %>`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        recipe: {
+          tag_list: tagArray.join(',')
+        }
+      })
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+      if (data.success) {
+        // Refresh the page to show new tags
+        window.location.reload();
+      } else {
+        alert('Error adding tags: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error adding tags: ' + error.message);
+    });
+  }
+  
+  function setRating(rating) {
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    // Send AJAX request to update rating
+    fetch(`<%= recipe_path(@recipe) %>`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        recipe: {
+          rating: rating
+        }
+      })
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+      if (data.success) {
+        // Update the display without page reload
+        const ratingDisplay = document.getElementById('rating-display');
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+          if (i <= rating) {
+            html += `<span class="text-yellow-400 cursor-pointer hover:text-yellow-500" onclick="setRating(${i})">★</span>`;
+          } else {
+            html += `<span class="text-gray-300 cursor-pointer hover:text-yellow-400" onclick="setRating(${i})">★</span>`;
+          }
+        }
+        ratingDisplay.innerHTML = html;
+      } else {
+        alert('Error updating rating: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error updating rating: ' + error.message);
+    });
+  }
 </script>

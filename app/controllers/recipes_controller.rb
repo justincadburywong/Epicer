@@ -147,9 +147,17 @@ class RecipesController < ApplicationController
 
   def update
     if @recipe.update(recipe_params)
-      redirect_to @recipe, notice: "Recipe was successfully updated."
+      if request.xhr?
+        render json: { success: true }
+      else
+        redirect_to @recipe, notice: "Recipe was successfully updated."
+      end
     else
-      render :edit, status: :unprocessable_entity
+      if request.xhr?
+        render json: { success: false, error: @recipe.errors.full_messages.join(", ") }
+      else
+        render :edit, status: :unprocessable_entity
+      end
     end
   end
 
