@@ -30,7 +30,7 @@
         <% if @current_tag == tag.name %>
           <%= link_to tag.name, recipes_path, class: "text-sm px-3 py-1 rounded-full bg-emerald-600 text-white" %>
         <% else %>
-          <%= link_to tag.name, recipes_path(tag: tag.name), class: "text-sm px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-200" %>
+          <%= link_to tag.name, recipes_path(tag: tag.name), class: "text-sm px-3 py-1 rounded-full bg-emerald-600 text-white hover:bg-emerald-700" %>
         <% end %>
       <% end %>
     </div>
