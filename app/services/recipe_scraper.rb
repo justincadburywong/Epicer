@@ -173,21 +173,32 @@ class RecipeScraper
   def normalize_instructions(instructions)
     return [] if instructions.blank?
     
-    result = if instructions.is_a?(Array)
-      instructions.map do |instruction|
-        if instruction.is_a?(Hash)
-          decode_html_entities(instruction["text"] || "")
-        else
-          decode_html_entities(instruction.to_s)
-        end
+    result = extract_instruction_steps(instructions)
+
+    result.compact.map { |s| clean_text(s) }.reject(&:blank?).join("\n\n")
+  end
+
+  def extract_instruction_steps(instructions)
+    return [] if instructions.blank?
+
+    if instructions.is_a?(Array)
+      instructions.flat_map { |instruction| extract_instruction_steps(instruction) }
+    elsif instructions.is_a?(Hash)
+      # Handle HowToSection with nested itemListElement
+      if instructions["@type"] == "HowToSection" && instructions["itemListElement"]
+        section_name = instructions["name"]
+        steps = extract_instruction_steps(instructions["itemListElement"])
+        section_name.present? ? ["**#{decode_html_entities(section_name)}**"] + steps : steps
+      elsif instructions["text"]
+        [decode_html_entities(instructions["text"])]
+      else
+        []
       end
     elsif instructions.is_a?(String)
       [decode_html_entities(instructions)]
     else
       []
     end
-
-    result.compact.map { |s| clean_text(s) }.reject(&:blank?).join("\n\n")
   end
 
   def normalize_ingredients(ingredients)
@@ -307,7 +318,7 @@ class RecipeScraper
     # Clean up relative URLs
     if image_url && image_url.is_a?(String) && !image_url.start_with?('http')
       base_uri = URI.parse(@url)
-      image_uri = URI.join(base_uri, image_url) rescue image_url
+      image_uri = URI.join(base_uri, encode_uri(image_url)) rescue image_url
       image_url = image_uri.to_s
     end
     
@@ -345,7 +356,7 @@ class RecipeScraper
           # Clean up relative URLs
           if !alt_url.start_with?('http')
             base_uri = URI.parse(@url)
-            alt_url = URI.join(base_uri, alt_url).to_s rescue alt_url
+            alt_url = URI.join(base_uri, encode_uri(alt_url)).to_s rescue alt_url
           end
           
           # Test if this alternative image is downloadable
@@ -387,7 +398,7 @@ class RecipeScraper
   end
   
   def try_download_with_headers(image_url)
-    uri = URI.parse(image_url)
+    uri = URI.parse(encode_uri(image_url))
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = uri.scheme == 'https'
     request = Net::HTTP::Get.new(uri.request_uri)
@@ -409,7 +420,7 @@ class RecipeScraper
   end
   
   def try_download_simple(image_url)
-    uri = URI.parse(image_url)
+    uri = URI.parse(encode_uri(image_url))
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = uri.scheme == 'https'
     request = Net::HTTP::Get.new(uri.request_uri)
@@ -435,5 +446,17 @@ class RecipeScraper
       filename: File.basename(uri.path) || 'recipe_image.jpg',
       content_type: response['content-type'] || 'image/jpeg'
     }
+  end
+
+  def encode_uri(url)
+    return url if url.nil? || url.ascii_only?
+    
+    # Parse the URL, encode non-ASCII characters in the path
+    uri = URI.parse(url)
+    uri.path = URI::DEFAULT_PARSER.escape(uri.path)
+    uri.to_s
+  rescue URI::InvalidURIError
+    # If parsing fails, encode the entire URL path portion
+    URI::DEFAULT_PARSER.escape(url)
   end
 end
