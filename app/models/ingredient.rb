@@ -7,24 +7,22 @@ class Ingredient < ApplicationRecord
   # Parse quantity string to handle fractions, decimals, and whole numbers
   def self.parse_quantity(quantity_str)
     return nil if quantity_str.blank?
-    
+
     # Handle fractions like "1 1/2", "3/4", "2 1/3"
     if quantity_str.match?(/\d+\s*\d+\/\d+|\d+\/\d+/)
       parts = quantity_str.split
       whole_number = 0
-      
+
       # Extract whole number part
       if parts.length > 1
         whole_part = parts[0].match(/\d+/)
         whole_number = whole_part ? whole_part[0].to_f : 0
       end
-      
+
       # Extract fraction part
       fraction_str = parts.last
-      if fraction_str.match?(/(\d+)\/(\d+)/)
-        numerator = $1.to_f
-        denominator = $2.to_f
-        whole_number + (numerator / denominator)
+      if match = fraction_str.match(/(\d+)\/(\d+)/)
+        match[1].to_f / match[2].to_f + whole_number
       else
         whole_number
       end
@@ -42,12 +40,12 @@ class Ingredient < ApplicationRecord
   def display_quantity(new_servings = nil)
     qty = new_servings ? scaled_quantity(new_servings) : quantity
     return "" unless qty
-    
+
     # Handle mixed numbers (whole + fraction) for quantities > 1
     if qty >= 1
       whole_part = qty.floor
       decimal_part = qty - whole_part
-      
+
       # Convert decimal part to fraction if it's close to common fractions
       fraction_part = if decimal_part < 0.125
         "1/8"
@@ -82,7 +80,7 @@ class Ingredient < ApplicationRecord
       else
         nil  # Use decimal for uncommon fractions
       end
-      
+
       if fraction_part && decimal_part > 0.0625  # Only show fraction if significant
         "#{whole_part} #{fraction_part}"
       else
