@@ -2,6 +2,7 @@
 
 one:
   title: MyString
+  slug: mystring
   description: MyText
   instructions: MyText
   source_url: MyString
@@ -12,7 +13,8 @@ one:
   notes: MyText
 
 two:
-  title: MyString
+  title: Another Recipe
+  slug: another-recipe
   description: MyText
   instructions: MyText
   source_url: MyString

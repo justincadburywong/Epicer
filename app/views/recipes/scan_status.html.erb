@@ -28,7 +28,7 @@
     </div>
 
     <div class="flex justify-center space-x-4">
-      <%= link_to "Check Status", recipes_scan_status_path(scan_key: params[:scan_key]), 
+      <%= link_to "Check Status", scan_status_recipes_path(scan_key: params[:scan_key]), 
           class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg" %>
       <%= link_to "Cancel", recipes_path, 
           class: "bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg" %>

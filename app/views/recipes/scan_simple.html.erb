@@ -7,25 +7,8 @@
     <h1 class="font-bold text-2xl mb-4">Scan Recipe from Photo</h1>
     <p class="text-gray-600 mb-6">Take multiple photos of a recipe (double-sided, multi-page) or upload images to extract the text automatically.</p>
 
-    <!-- Simple Debug Panel -->
-    <div id="debug-panel" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-      <h3 class="font-semibold text-yellow-800 mb-2">🔍 Debug Info</h3>
-      <div id="debug-content" class="text-sm text-yellow-700 font-mono whitespace-pre-wrap">Debug system loading...</div>
-    </div>
-
     <!-- Simple Script - No Stimulus, No Timeouts -->
     <script>
-      function debugLog(message) {
-        const debugContent = document.getElementById('debug-content')
-        if (debugContent) {
-          const timestamp = new Date().toLocaleTimeString()
-          debugContent.innerHTML += `[${timestamp}] ${message}\n`
-          debugContent.scrollTop = debugContent.scrollHeight
-        }
-      }
-      
-      debugLog('✓ Simple scan page loaded!')
-      
       // Global photo storage
       let capturedPhotos = []
       let currentPhoto = null
@@ -33,7 +16,6 @@
       
       // Simple camera functions
       async function startCamera() {
-        debugLog('📷 Starting camera...')
         try {
           cameraStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -48,15 +30,12 @@
           placeholder.classList.add("hidden")
           captureBtn.classList.remove("hidden")
           
-          debugLog('✓ Camera started successfully!')
         } catch (err) {
-          debugLog('✗ Camera error: ' + err.message)
           alert("Could not access camera. Please use file upload instead.")
         }
       }
       
       function capturePhoto() {
-        debugLog('📸 Capturing photo...')
         
         const video = document.getElementById('video')
         const canvas = document.getElementById('canvas')
@@ -67,7 +46,6 @@
         const singlePhotoContainer = document.getElementById('singlePhotoContainer')
         
         if (!video || !canvas) {
-          debugLog('✗ Video or canvas not found!')
           return
         }
         
@@ -92,16 +70,12 @@
           cameraStream.getTracks().forEach(track => track.stop())
           video.classList.add("hidden")
         }
-        
-        debugLog('✓ Photo captured! Add Photo button should be visible.')
       }
       
       function addPhoto() {
-        debugLog('➕ Adding photo to collection...')
         
         if (currentPhoto) {
           capturedPhotos.push(currentPhoto)
-          debugLog('Photo stored. Total photos: ' + capturedPhotos.length)
           updatePhotoPreview()
         }
         
@@ -151,13 +125,11 @@
       }
       
       function retakePhoto() {
-        debugLog('↩ Retaking photo...')
         resetForNewPhoto()
         startCamera()
       }
       
       async function submitPhotos() {
-        debugLog('🚀 Submitting photos...')
         
         const loading = document.getElementById('loading')
         const submitBtn = document.getElementById('submitBtn')
@@ -170,7 +142,6 @@
           
           if (capturedPhotos.length > 0) {
             // Multiple photos
-            debugLog('Submitting ' + capturedPhotos.length + ' photos')
             
             // Add current photo if exists
             if (currentPhoto) {
@@ -187,7 +158,6 @@
             })
           } else {
             // Single photo
-            debugLog('Submitting single photo')
             response = await fetch("/recipes/scan", {
               method: "POST",
               headers: {
@@ -203,11 +173,9 @@
           if (data.error) {
             alert(data.error)
           } else if (data.redirect_url) {
-            debugLog('✓ Redirecting to: ' + data.redirect_url)
             window.location.href = data.redirect_url
           }
         } catch (err) {
-          debugLog('✗ Submit error: ' + err.message)
           alert("Failed to process images. Please try again.")
         } finally {
           loading.classList.add("hidden")
@@ -216,7 +184,6 @@
       }
       
       function clearAllPhotos() {
-        debugLog('🗑️ Clearing all photos...')
         capturedPhotos = []
         currentPhoto = null
         
@@ -232,7 +199,6 @@
       
       // File upload handling
       function handleFileSelect(event) {
-        debugLog('📁 File selected...')
         const file = event.target.files[0]
         if (file) {
           const reader = new FileReader()
@@ -247,8 +213,6 @@
             document.getElementById('addPhotoBtn').classList.remove("hidden")
             document.getElementById('submitBtn').classList.remove("hidden")
             document.getElementById('singlePhotoContainer').classList.remove("hidden")
-            
-            debugLog('✓ File loaded successfully!')
           }
           reader.readAsDataURL(file)
         }
@@ -259,7 +223,7 @@
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row gap-3">
         <button type="button" 
-                onclick="debugLog('Camera button clicked!'); startCamera();"
+                onclick="startCamera();"
                 class="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -315,35 +279,35 @@
       <div class="flex gap-3">
         <button id="captureBtn"
                 type="button"
-                onclick="debugLog('Capture button clicked!'); capturePhoto();"
+                onclick="capturePhoto();"
                 class="hidden flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
           📸 Capture Photo
         </button>
         
         <button id="retakeBtn"
                 type="button"
-                onclick="debugLog('Retake button clicked!'); retakePhoto();"
+                onclick="retakePhoto();"
                 class="hidden flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg">
           ↩ Retake
         </button>
         
         <button id="addPhotoBtn"
                 type="button"
-                onclick="debugLog('Add Photo button clicked!'); addPhoto();"
+                onclick="addPhoto();"
                 class="hidden flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg">
           ➕ Add Another Photo
         </button>
         
         <button id="clearPhotosBtn"
                 type="button"
-                onclick="debugLog('Clear Photos button clicked!'); clearAllPhotos();"
+                onclick="clearAllPhotos();"
                 class="hidden flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg">
           🗑️ Clear All
         </button>
         
         <button id="submitBtn"
                 type="button"
-                onclick="debugLog('Submit button clicked!'); submitPhotos();"
+                onclick="submitPhotos();"
                 class="hidden flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg">
           ✨ Extract Recipe
         </button>
