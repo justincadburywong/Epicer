@@ -50,6 +50,13 @@
           display: none !important;
         }
         
+        /* Hide no-print elements with maximum specificity */
+        .no-print,
+        div.no-print,
+        main > div.no-print {
+          display: none !important;
+        }
+        
         /* Convert all fixed elements to absolute */
         .fixed {
           position: absolute !important;
