@@ -25,11 +25,54 @@
     
     <style>
       @media print {
-        .print-hide {
+        /* Hide navbar completely with maximum specificity */
+        nav,
+        .navbar-print-hide,
+        nav.navbar-print-hide,
+        nav.fixed,
+        body > nav,
+        body > nav.navbar-print-hide {
+          display: none !important;
+          position: absolute !important;
+          top: -9999px !important;
+          left: -9999px !important;
+          width: 0 !important;
+          height: 0 !important;
+          overflow: hidden !important;
+          visibility: hidden !important;
+          clip: rect(0, 0, 0, 0) !important;
+          z-index: -9999 !important;
+        }
+        
+        /* Hide all navbar children */
+        nav > *,
+        .navbar-print-hide > * {
           display: none !important;
         }
-        .no-print {
+        
+        /* Convert all fixed elements to absolute */
+        .fixed {
+          position: absolute !important;
+        }
+        
+        /* Hide all images */
+        img {
           display: none !important;
+        }
+        
+        /* Reset body and main */
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        main {
+          margin: 0 !important;
+          padding: 0 !important;
+          padding-top: 0 !important;
+        }
+        .container {
+          padding: 0 !important;
+          margin: 0 !important;
         }
       }
     </style>
@@ -43,7 +86,7 @@
   </head>
 
   <body class="min-h-screen bg-slate-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200" id="app-body">
-    <nav class="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-50">
+    <nav class="navbar-print-hide bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-50">
       <div class="container mx-auto px-4 sm:px-6">
         <div class="flex justify-between items-center h-16">
           <%= link_to root_path, class: "flex items-center gap-2" do %>
