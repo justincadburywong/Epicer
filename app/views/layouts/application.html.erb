@@ -81,6 +81,27 @@
           padding: 0 !important;
           margin: 0 !important;
         }
+        
+        /* Remove max-width constraint from recipe container */
+        .max-w-4xl,
+        div.max-w-4xl,
+        main > div > div.max-w-4xl {
+          max-width: 100% !important;
+        }
+        
+        /* Remove article styling for print */
+        article,
+        article.bg-white,
+        article.rounded-lg,
+        article.shadow-md,
+        article.p-6 {
+          box-shadow: none !important;
+          border: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: transparent !important;
+        }
       }
     </style>
     
