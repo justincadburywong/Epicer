@@ -2,12 +2,27 @@ class RecipesController < ApplicationController
   before_action :set_recipe, only: %i[show edit update destroy purge_image purge_document]
 
   def index
-    @recipes = Recipe.search(params[:query]).order(created_at: :desc)
+    # Load all recipes for search/filtering
+    @all_recipes = Recipe.all
+    
+    # Apply search and tag filtering to all recipes
+    filtered_recipes = @all_recipes.search(params[:query]).order(created_at: :desc)
     
     if params[:tag].present?
-      @recipes = @recipes.joins(:tags).where(tags: { name: params[:tag] })
+      filtered_recipes = filtered_recipes.joins(:tags).where(tags: { name: params[:tag] })
       @current_tag = params[:tag]
     end
+    
+    # Pagination: show 36 recipes per page
+    page = (params[:page] || 1).to_i
+    per_page = 36
+    @total_recipes = filtered_recipes.count
+    @total_pages = (@total_recipes.to_f / per_page).ceil
+    @current_page = [page, 1].max
+    @current_page = [@current_page, @total_pages].min if @total_pages > 0
+    
+    offset = (@current_page - 1) * per_page
+    @recipes = filtered_recipes.offset(offset).limit(per_page)
     
     @all_tags = Tag.popular.limit(20)
   end
