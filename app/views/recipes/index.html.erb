@@ -44,7 +44,11 @@
       </p>
     <% elsif params[:query].present? %>
       <p class="text-sm text-gray-500 mb-4">
-        Found <%= pluralize(@recipes.count, "recipe") %> matching "<%= params[:query] %>"
+        Found <%= pluralize(@total_recipes, "recipe") %> matching "<%= params[:query] %>"
+      </p>
+    <% else %>
+      <p class="text-sm text-gray-500 mb-4">
+        Showing <%= @recipes.count %> of <%= @total_recipes %> recipes
       </p>
     <% end %>
 
@@ -60,6 +64,30 @@
       <% else %>
         <p class="text-gray-500 text-center py-12">No recipes yet. Add your first recipe!</p>
       <% end %>
+    <% end %>
+
+    <% if @total_pages > 1 %>
+      <div class="flex justify-center items-center gap-2 mt-8">
+        <% if @current_page > 1 %>
+          <%= link_to recipes_path(page: @current_page - 1, query: params[:query], tag: params[:tag]), 
+              class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors duration-200",
+              data: { turbo_frame: "recipes_list" } do %>
+            ← Previous
+          <% end %>
+        <% end %>
+
+        <span class="text-gray-600 dark:text-gray-400">
+          Page <%= @current_page %> of <%= @total_pages %>
+        </span>
+
+        <% if @current_page < @total_pages %>
+          <%= link_to recipes_path(page: @current_page + 1, query: params[:query], tag: params[:tag]), 
+              class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors duration-200",
+              data: { turbo_frame: "recipes_list" } do %>
+            Next →
+          <% end %>
+        <% end %>
+      </div>
     <% end %>
   <% end %>
 </div>
