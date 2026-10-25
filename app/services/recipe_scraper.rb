@@ -21,8 +21,16 @@ class RecipeScraper
   def fetch_page
     response = HTTParty.get(@url, {
       headers: {
-        "User-Agent" => "Mozilla/5.0 (compatible; RecipeVault/1.0)",
-        "Accept" => "text/html"
+        "User-Agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language" => "en-US,en;q=0.9",
+        "Accept-Encoding" => "gzip, deflate, br",
+        "Connection" => "keep-alive",
+        "Upgrade-Insecure-Requests" => "1",
+        "Sec-Fetch-Dest" => "document",
+        "Sec-Fetch-Mode" => "navigate",
+        "Sec-Fetch-Site" => "none",
+        "Cache-Control" => "max-age=0"
       },
       follow_redirects: true,
       timeout: 10,
@@ -132,6 +140,10 @@ class RecipeScraper
     # Decode common HTML entities
     text = text.to_s
       .gsub(/&#39;/, "'")
+      .gsub(/&#8217;/, "'")  # Right single quotation mark (curly apostrophe)
+      .gsub(/&#8216;/, "'")  # Left single quotation mark
+      .gsub(/&#8220;/, '"')  # Left double quotation mark
+      .gsub(/&#8221;/, '"')  # Right double quotation mark
       .gsub(/&quot;/, '"')
       .gsub(/&amp;/, '&')
       .gsub(/&lt;/, '<')
@@ -141,6 +153,9 @@ class RecipeScraper
       .gsub(/&#38;/, '&')
       .gsub(/&#60;/, '<')
       .gsub(/&#62;/, '>')
+      .gsub(/&#8226;/, '')  # Preserve bullet character
+      .gsub(/&bull;/, '')    # Preserve bullet character
+      .gsub(/&#9679;/, '')   # Preserve filled circle
       .strip
     
     text
@@ -235,7 +250,7 @@ class RecipeScraper
     unit = nil
     name = text
 
-    if text =~ /^([\d\s\/\.]+)\s*(cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|quarts?|pints?|gallons?|cloves?|pieces?|slices?|cans?|packages?|sticks?)?\s*(.+)/i
+    if text =~ /^([\d\/\.]+)\s*(cups?|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|liters?|quarts?|pints?|gallons?|cloves?|pieces?|slices?|cans?|packages?|sticks?)?\s*(.+)/i
       quantity = parse_quantity($1)
       unit = $2&.strip&.downcase
       name = $3.strip
