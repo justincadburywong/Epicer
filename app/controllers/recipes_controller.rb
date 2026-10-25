@@ -1,5 +1,6 @@
 class RecipesController < ApplicationController
   before_action :set_recipe, only: %i[show edit update destroy purge_image purge_document]
+  skip_before_action :verify_authenticity_token, only: [:import]
 
   def index
     # Load all recipes for search/filtering
