@@ -92,6 +92,10 @@ Then visit `http://<your-computer-ip>:3000` on your phone.
 bin/rails test
 ```
 
+## Production Deployment
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+
 ## Project Structure
 
 ```

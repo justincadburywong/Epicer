@@ -24,6 +24,9 @@ Rails.application.configure do
   # Store uploaded files on local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
+  # Enable public file server for ActiveStorage when using local storage
+  config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present? || true
+
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
 
