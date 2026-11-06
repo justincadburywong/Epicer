@@ -47,35 +47,35 @@ class Ingredient < ApplicationRecord
       decimal_part = qty - whole_part
 
       # Convert decimal part to fraction if it's close to common fractions
-      fraction_part = if decimal_part < 0.125
+      fraction_part = if decimal_part <= 0.125
         "1/8"
-      elsif decimal_part < 0.1875
+      elsif decimal_part <= 0.1875
         "1/6"
-      elsif decimal_part < 0.25
+      elsif decimal_part <= 0.25
         "1/4"
-      elsif decimal_part < 0.3125
+      elsif decimal_part <= 0.3125
         "1/3"
-      elsif decimal_part < 0.375
+      elsif decimal_part <= 0.375
         "3/8"
-      elsif decimal_part < 0.4375
+      elsif decimal_part <= 0.4375
         "3/7"
-      elsif decimal_part < 0.5
+      elsif decimal_part <= 0.5
         "3/8"
-      elsif decimal_part < 0.5625
+      elsif decimal_part <= 0.5625
         "1/2"
-      elsif decimal_part < 0.625
+      elsif decimal_part <= 0.625
         "5/8"
-      elsif decimal_part < 0.6875
+      elsif decimal_part <= 0.6875
         "2/3"
-      elsif decimal_part < 0.75
+      elsif decimal_part <= 0.75
         "3/4"
-      elsif decimal_part < 0.8125
+      elsif decimal_part <= 0.8125
         "5/6"
-      elsif decimal_part < 0.875
+      elsif decimal_part <= 0.875
         "7/8"
-      elsif decimal_part < 0.9375
+      elsif decimal_part <= 0.9375
         "15/16"
-      elsif decimal_part < 1.0625
+      elsif decimal_part <= 1.0625
         nil  # Whole number, no fraction needed
       else
         nil  # Use decimal for uncommon fractions
@@ -88,35 +88,35 @@ class Ingredient < ApplicationRecord
       end
     else
       # For quantities < 1, use existing fraction logic
-      if qty < 0.125
+      if qty <= 0.125
         "1/8"
-      elsif qty < 0.1875
+      elsif qty <= 0.1875
         "1/6"
-      elsif qty < 0.25
+      elsif qty <= 0.25
         "1/4"
-      elsif qty < 0.3125
+      elsif qty <= 0.3125
         "1/3"
-      elsif qty < 0.375
+      elsif qty <= 0.375
         "3/8"
-      elsif qty < 0.4375
+      elsif qty <= 0.4375
         "3/7"
-      elsif qty < 0.5
+      elsif qty <= 0.5
         "3/8"
-      elsif qty < 0.5625
+      elsif qty <= 0.5625
         "1/2"
-      elsif qty < 0.625
+      elsif qty <= 0.625
         "5/8"
-      elsif qty < 0.6875
+      elsif qty <= 0.6875
         "2/3"
-      elsif qty < 0.75
+      elsif qty <= 0.75
         "3/4"
-      elsif qty < 0.8125
+      elsif qty <= 0.8125
         "5/6"
-      elsif qty < 0.875
+      elsif qty <= 0.875
         "7/8"
-      elsif qty < 0.9375
+      elsif qty <= 0.9375
         "15/16"
-      elsif qty < 1.0625
+      elsif qty <= 1.0625
         "1"
       else
         # For uncommon fractions, show decimal
