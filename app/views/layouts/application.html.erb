@@ -24,7 +24,27 @@
     <%= javascript_importmap_tags %>
     
     <style>
+      /* Instruction numbering for both screen and print */
+      .prose {
+        counter-reset: instruction-counter;
+      }
+
+      .prose p {
+        counter-increment: instruction-counter;
+      }
+
+      .prose p::before {
+        content: counter(instruction-counter) ". ";
+        font-weight: bold;
+        margin-right: 0.25rem;
+      }
+
       @media print {
+        /* Control page margins - 3/4 inch on all sides */
+        @page {
+          margin: 0.75in;
+        }
+
         /* Hide navbar completely with maximum specificity */
         nav,
         .navbar-print-hide,
