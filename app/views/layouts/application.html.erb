@@ -20,11 +20,32 @@
 
     <%# Include Tailwind CSS %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
-    
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
     <%= javascript_importmap_tags %>
     
     <style>
+      /* Instruction numbering for both screen and print */
+      .prose {
+        counter-reset: instruction-counter;
+      }
+
+      .prose p {
+        counter-increment: instruction-counter;
+      }
+
+      .prose p::before {
+        content: counter(instruction-counter) ". ";
+        font-weight: bold;
+        margin-right: 0.25rem;
+      }
+
       @media print {
+        /* Control page margins - 3/4 inch on all sides */
+        @page {
+          margin: 0.75in;
+        }
+
         /* Hide navbar completely with maximum specificity */
         nav,
         .navbar-print-hide,
@@ -43,30 +64,30 @@
           clip: rect(0, 0, 0, 0) !important;
           z-index: -9999 !important;
         }
-        
+
         /* Hide all navbar children */
         nav > *,
         .navbar-print-hide > * {
           display: none !important;
         }
-        
+
         /* Hide no-print elements with maximum specificity */
         .no-print,
         div.no-print,
         main > div.no-print {
           display: none !important;
         }
-        
+
         /* Convert all fixed elements to absolute */
         .fixed {
           position: absolute !important;
         }
-        
+
         /* Hide all images */
         img {
           display: none !important;
         }
-        
+
         /* Reset body and main */
         body {
           margin: 0 !important;
@@ -81,14 +102,14 @@
           padding: 0 !important;
           margin: 0 !important;
         }
-        
+
         /* Remove max-width constraint from recipe container */
         .max-w-4xl,
         div.max-w-4xl,
         main > div > div.max-w-4xl {
           max-width: 100% !important;
         }
-        
+
         /* Remove article styling for print */
         article,
         article.bg-white,

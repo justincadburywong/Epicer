@@ -19,10 +19,21 @@ class RecipeScraper
   private
 
   def fetch_page
+    # Add a small delay to avoid rate limiting
+    sleep(1)
+
     response = HTTParty.get(@url, {
       headers: {
-        "User-Agent" => "Mozilla/5.0 (compatible; RecipeVault/1.0)",
-        "Accept" => "text/html"
+        "User-Agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language" => "en-US,en;q=0.9",
+        "Accept-Encoding" => "gzip, deflate, br",
+        "Connection" => "keep-alive",
+        "Upgrade-Insecure-Requests" => "1",
+        "Sec-Fetch-Dest" => "document",
+        "Sec-Fetch-Mode" => "navigate",
+        "Sec-Fetch-Site" => "none",
+        "Cache-Control" => "max-age=0"
       },
       follow_redirects: true,
       timeout: 10,
@@ -30,8 +41,18 @@ class RecipeScraper
       verify: ssl_verify_mode,
       verify_peer: ssl_verify_mode
     })
-    
-    raise ScrapingError, "Failed to fetch page: #{response.code}" unless response.success?
+
+    unless response.success?
+      Rails.logger.error "Failed to fetch #{@url}: HTTP #{response.code} - #{response.message}"
+      Rails.logger.error "Response body: #{response.body[0..500]}" if response.body
+
+      if response.code == 403
+        raise ScrapingError, "This site has anti-scraping protection and blocked the request. Please try adding the recipe manually or use a different URL."
+      else
+        raise ScrapingError, "Failed to fetch page: HTTP #{response.code} - #{response.message}"
+      end
+    end
+
     response
   end
 

@@ -9,6 +9,21 @@
  * Consider organizing styles into separate files for maintainability.
  */
 
+/* Instruction numbering for both screen and print */
+.prose {
+  counter-reset: instruction-counter;
+}
+
+.prose p {
+  counter-increment: instruction-counter;
+}
+
+.prose p::before {
+  content: counter(instruction-counter) ". ";
+  font-weight: bold;
+  margin-right: 0.25rem;
+}
+
 @media print {
   /* Hide non-essential elements */
   .no-print,
@@ -52,7 +67,7 @@
 
   /* Control page margins and headers */
   @page {
-    margin: 1cm;
+    margin: 0.5in;
   }
 
   /* Reset page layout - compact */
