@@ -4,6 +4,7 @@
     <title><%= content_for(:title) || "Epicer" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Epicer">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -13,26 +14,172 @@
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>" type="image/svg+xml">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%# Include Tailwind CSS %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    
     <%= javascript_importmap_tags %>
+    
+    <style>
+      /* Instruction numbering for both screen and print */
+      .prose {
+        counter-reset: instruction-counter;
+      }
+
+      .prose p {
+        counter-increment: instruction-counter;
+      }
+
+      .prose p::before {
+        content: counter(instruction-counter) ". ";
+        font-weight: bold;
+        margin-right: 0.25rem;
+      }
+
+      @media print {
+        /* Control page margins - 3/4 inch on all sides */
+        @page {
+          margin: 0.75in;
+        }
+
+        /* Hide navbar completely with maximum specificity */
+        nav,
+        .navbar-print-hide,
+        nav.navbar-print-hide,
+        nav.fixed,
+        body > nav,
+        body > nav.navbar-print-hide {
+          display: none !important;
+          position: absolute !important;
+          top: -9999px !important;
+          left: -9999px !important;
+          width: 0 !important;
+          height: 0 !important;
+          overflow: hidden !important;
+          visibility: hidden !important;
+          clip: rect(0, 0, 0, 0) !important;
+          z-index: -9999 !important;
+        }
+        
+        /* Hide all navbar children */
+        nav > *,
+        .navbar-print-hide > * {
+          display: none !important;
+        }
+        
+        /* Hide no-print elements with maximum specificity */
+        .no-print,
+        div.no-print,
+        main > div.no-print {
+          display: none !important;
+        }
+        
+        /* Convert all fixed elements to absolute */
+        .fixed {
+          position: absolute !important;
+        }
+        
+        /* Hide all images */
+        img {
+          display: none !important;
+        }
+        
+        /* Reset body and main */
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        main {
+          margin: 0 !important;
+          padding: 0 !important;
+          padding-top: 0 !important;
+        }
+        .container {
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        
+        /* Remove max-width constraint from recipe container */
+        .max-w-4xl,
+        div.max-w-4xl,
+        main > div > div.max-w-4xl {
+          max-width: 100% !important;
+        }
+        
+        /* Remove article styling for print */
+        article,
+        article.bg-white,
+        article.rounded-lg,
+        article.shadow-md,
+        article.p-6 {
+          box-shadow: none !important;
+          border: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: transparent !important;
+        }
+      }
+    </style>
+    
+    <script>
+      function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+      }
+
+      document.addEventListener('turbo:frame-load', function(event) {
+        if (event.target.id === 'recipes_list') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    </script>
   </head>
 
-  <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+  <body class="min-h-screen bg-slate-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200" id="app-body">
+    <nav class="navbar-print-hide bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-50">
       <div class="container mx-auto px-4 sm:px-6">
         <div class="flex justify-between items-center h-16">
           <%= link_to root_path, class: "flex items-center gap-2" do %>
             <span class="text-2xl">🍳</span>
-            <span class="font-bold text-xl text-emerald-600">Epicer</span>
+            <span class="font-bold text-xl text-emerald-600 dark:text-emerald-400">Epicer</span>
           <% end %>
-          <div class="flex items-center gap-2 sm:gap-4">
-            <%= link_to "Recipes", recipes_path, class: "text-gray-600 hover:text-emerald-600 text-sm sm:text-base" %>
-            <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg" %>
+          <!-- Mobile menu button -->
+          <div class="sm:hidden">
+            <button onclick="toggleMobileMenu()" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+          </div>
+          <!-- Desktop buttons -->
+          <div class="hidden sm:flex flex-wrap gap-2">
+            <%= link_to scan_recipes_path, class: "bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-1" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Scan
+            <% end %>
+            <%= link_to "Import URL", import_recipes_path, class: "bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg" %>
+            <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg" %>
+          </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden sm:hidden pb-4">
+          <div class="flex flex-col gap-2">
+            <%= link_to scan_recipes_path, class: "bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-1" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Scan
+            <% end %>
+            <%= link_to "Import URL", import_recipes_path, class: "bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg" %>
+            <%= link_to "+ New", new_recipe_path, class: "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg" %>
           </div>
         </div>
       </div>
@@ -40,12 +187,12 @@
 
     <main class="container mx-auto pt-20 pb-8 px-4 sm:px-6">
       <% if notice.present? %>
-        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg">
+        <div class="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg">
           <%= notice %>
         </div>
       <% end %>
       <% if alert.present? %>
-        <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+        <div class="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg">
           <%= alert %>
         </div>
       <% end %>

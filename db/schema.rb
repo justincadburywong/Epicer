@@ -10,29 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_22_040601) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_27_051911) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "record_type", null: false
-    t.bigint "record_id", null: false
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
   create_table "active_storage_blobs", force: :cascade do |t|
-    t.string "key", null: false
-    t.string "filename", null: false
-    t.string "content_type"
-    t.text "metadata"
-    t.string "service_name", null: false
     t.bigint "byte_size", null: false
     t.string "checksum"
+    t.string "content_type"
     t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
@@ -43,31 +43,31 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_040601) do
   end
 
   create_table "friendly_id_slugs", force: :cascade do |t|
+    t.datetime "created_at"
+    t.string "scope"
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
     t.string "sluggable_type", limit: 50
-    t.string "scope"
-    t.datetime "created_at"
     t.index ["slug", "sluggable_type", "scope"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
     t.index ["slug", "sluggable_type"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
     t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
   end
 
   create_table "ingredients", force: :cascade do |t|
-    t.bigint "recipe_id", null: false
-    t.string "name"
-    t.decimal "quantity"
-    t.string "unit"
-    t.integer "position"
     t.datetime "created_at", null: false
+    t.string "name"
+    t.integer "position"
+    t.decimal "quantity"
+    t.bigint "recipe_id", null: false
+    t.string "unit"
     t.datetime "updated_at", null: false
     t.index ["recipe_id"], name: "index_ingredients_on_recipe_id"
   end
 
   create_table "recipe_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
     t.bigint "recipe_id", null: false
     t.bigint "tag_id", null: false
-    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["recipe_id", "tag_id"], name: "index_recipe_tags_on_recipe_id_and_tag_id", unique: true
     t.index ["recipe_id"], name: "index_recipe_tags_on_recipe_id"
@@ -75,18 +75,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_040601) do
   end
 
   create_table "recipes", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
-    t.text "instructions"
-    t.string "source_url"
-    t.integer "prep_time"
     t.integer "cook_time"
-    t.integer "servings"
-    t.integer "rating"
-    t.text "notes"
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.text "description"
+    t.string "image_url"
+    t.text "instructions"
+    t.text "notes"
+    t.integer "prep_time"
+    t.integer "rating"
+    t.integer "servings"
     t.string "slug"
+    t.string "source_url"
+    t.string "title"
+    t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_recipes_on_created_at"
     t.index ["rating"], name: "index_recipes_on_rating"
     t.index ["slug"], name: "index_recipes_on_slug", unique: true
@@ -94,8 +95,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_22_040601) do
   end
 
   create_table "tags", force: :cascade do |t|
-    t.string "name", null: false
     t.datetime "created_at", null: false
+    t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_tags_on_name", unique: true
   end

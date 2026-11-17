@@ -3,6 +3,7 @@ class Recipe < ApplicationRecord
   has_many :recipe_tags, dependent: :destroy
   has_many :tags, through: :recipe_tags
   has_many_attached :images
+  has_one_attached :feature_image
   has_many_attached :documents
   extend FriendlyId
   friendly_id :title, use: :slugged
@@ -35,5 +36,19 @@ class Recipe < ApplicationRecord
 
   def total_time
     (prep_time || 0) + (cook_time || 0)
+  end
+
+  def display_image
+    if feature_image.attached?
+      feature_image
+    else
+      images.first&.blob
+    end
+  end
+
+  def display_image_variant(size = 400)
+    if display_image.present?
+      display_image.variant(resize_to_fill: [size, size], gravity: 'Center', crop: 'Center')
+    end
   end
 end

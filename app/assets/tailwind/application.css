@@ -1,1 +1,80 @@
 @import "tailwindcss";
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #111827 !important;
+    color: #f3f4f6 !important;
+  }
+
+  .bg-white {
+    background-color: #1f2937 !important;
+  }
+
+  .bg-gray-50 {
+    background-color: #374151 !important;
+  }
+
+  .bg-gray-100 {
+    background-color: #1f2937 !important;
+  }
+
+  .text-gray-900 {
+    color: #f3f4f6 !important;
+  }
+
+  .text-gray-600 {
+    color: #d1d5db !important;
+  }
+
+  .text-gray-500 {
+    color: #9ca3af !important;
+  }
+
+  .bg-emerald-50 {
+    background-color: #064e3b !important;
+  }
+
+  .text-emerald-700 {
+    color: #34d399 !important;
+  }
+
+  .text-emerald-800 {
+    color: #6ee7b7 !important;
+  }
+
+  .border-gray-200 {
+    border-color: #374151 !important;
+  }
+
+  .border-gray-100 {
+    border-color: #374151 !important;
+  }
+
+  .bg-purple-500 {
+    background-color: #7c3aed !important;
+  }
+
+  .bg-purple-600 {
+    background-color: #6d28d9 !important;
+  }
+
+  .bg-blue-500 {
+    background-color: #2563eb !important;
+  }
+
+  .bg-blue-600 {
+    background-color: #1d4ed8 !important;
+  }
+
+  .hover\:bg-gray-100:hover {
+    background-color: #374151 !important;
+  }
+
+  .hover\:bg-gray-50:hover {
+    background-color: #374151 !important;
+  }
+
+  .hover\:bg-white:hover {
+    background-color: #374151 !important;
+  }
+}
