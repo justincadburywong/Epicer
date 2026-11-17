@@ -47,19 +47,19 @@ class Ingredient < ApplicationRecord
       decimal_part = qty - whole_part
 
       # Convert decimal part to fraction if it's close to common fractions
-      fraction_part = if decimal_part <= 0.125
+      fraction_part = if decimal_part < 0.125
         "1/8"
-      elsif decimal_part <= 0.1875
+      elsif decimal_part < 0.1875
         "1/6"
-      elsif decimal_part <= 0.25
+      elsif decimal_part < 0.25
         "1/4"
-      elsif decimal_part <= 0.3125
+      elsif decimal_part < 0.3125
         "1/3"
-      elsif decimal_part <= 0.375
+      elsif decimal_part < 0.375
         "3/8"
-      elsif decimal_part <= 0.4375
+      elsif decimal_part < 0.4375
         "3/7"
-      elsif decimal_part <= 0.5
+      elsif decimal_part < 0.5
         "3/8"
       elsif decimal_part <= 0.5625
         "1/2"
@@ -88,19 +88,19 @@ class Ingredient < ApplicationRecord
       end
     else
       # For quantities < 1, use existing fraction logic
-      if qty <= 0.125
+      if qty < 0.125
         "1/8"
-      elsif qty <= 0.1875
+      elsif qty < 0.1875
         "1/6"
-      elsif qty <= 0.25
+      elsif qty < 0.25
         "1/4"
-      elsif qty <= 0.3125
+      elsif qty < 0.3125
         "1/3"
-      elsif qty <= 0.375
+      elsif qty < 0.375
         "3/8"
-      elsif qty <= 0.4375
+      elsif qty < 0.4375
         "3/7"
-      elsif qty <= 0.5
+      elsif qty < 0.5
         "3/8"
       elsif qty <= 0.5625
         "1/2"
