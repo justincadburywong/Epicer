@@ -22,6 +22,7 @@ Rails.application.routes.draw do
     member do
       delete :purge_image
       delete :purge_document
+      delete :remove_tag
     end
   end
 end

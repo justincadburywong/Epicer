@@ -1,5 +1,5 @@
 class RecipesController < ApplicationController
-  before_action :set_recipe, only: %i[show edit update destroy purge_image purge_document]
+  before_action :set_recipe, only: %i[show edit update destroy purge_image purge_document remove_tag]
 
   def index
     @recipes = Recipe.search(params[:query]).order(created_at: :desc)
@@ -113,6 +113,14 @@ class RecipesController < ApplicationController
     document = @recipe.documents.find(params[:document_id])
     document.purge
     redirect_to edit_recipe_path(@recipe), notice: "Document removed."
+  end
+
+  def remove_tag
+    @tag = @recipe.tags.find(params[:tag_id])
+    @recipe.tags.delete(@tag)
+    respond_to do |format|
+      format.turbo_stream
+    end
   end
 
   def scan
