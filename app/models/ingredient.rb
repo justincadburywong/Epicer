@@ -46,40 +46,8 @@ class Ingredient < ApplicationRecord
       whole_part = qty.floor
       decimal_part = qty - whole_part
 
-      # Convert decimal part to fraction if it's close to common fractions
-      fraction_part = if decimal_part < 0.125
-        "1/8"
-      elsif decimal_part < 0.1875
-        "1/6"
-      elsif decimal_part < 0.25
-        "1/4"
-      elsif decimal_part < 0.3125
-        "1/3"
-      elsif decimal_part < 0.375
-        "3/8"
-      elsif decimal_part < 0.4375
-        "3/7"
-      elsif decimal_part < 0.5
-        "3/8"
-      elsif decimal_part <= 0.5625
-        "1/2"
-      elsif decimal_part <= 0.625
-        "5/8"
-      elsif decimal_part <= 0.6875
-        "2/3"
-      elsif decimal_part <= 0.75
-        "3/4"
-      elsif decimal_part <= 0.8125
-        "5/6"
-      elsif decimal_part <= 0.875
-        "7/8"
-      elsif decimal_part <= 0.9375
-        "15/16"
-      elsif decimal_part <= 1.0625
-        nil  # Whole number, no fraction needed
-      else
-        nil  # Use decimal for uncommon fractions
-      end
+      # Convert decimal part to fraction by finding nearest common fraction
+      fraction_part = nearest_fraction(decimal_part)
 
       if fraction_part && decimal_part > 0.0625  # Only show fraction if significant
         "#{whole_part} #{fraction_part}"
@@ -87,35 +55,10 @@ class Ingredient < ApplicationRecord
         whole_part.to_s
       end
     else
-      # For quantities < 1, use existing fraction logic
-      if qty < 0.125
-        "1/8"
-      elsif qty < 0.1875
-        "1/6"
-      elsif qty < 0.25
-        "1/4"
-      elsif qty < 0.3125
-        "1/3"
-      elsif qty < 0.375
-        "3/8"
-      elsif qty < 0.4375
-        "3/7"
-      elsif qty < 0.5
-        "3/8"
-      elsif qty <= 0.5625
-        "1/2"
-      elsif qty <= 0.625
-        "5/8"
-      elsif qty <= 0.6875
-        "2/3"
-      elsif qty <= 0.75
-        "3/4"
-      elsif qty <= 0.8125
-        "5/6"
-      elsif qty <= 0.875
-        "7/8"
-      elsif qty <= 0.9375
-        "15/16"
+      # For quantities < 1, find nearest common fraction
+      fraction_str = nearest_fraction(qty)
+      if fraction_str && qty > 0.0625
+        fraction_str
       elsif qty <= 1.0625
         "1"
       else
@@ -128,5 +71,29 @@ class Ingredient < ApplicationRecord
         end
       end
     end
+  end
+
+  def nearest_fraction(decimal)
+    return nil if decimal.nil? || decimal <= 0
+
+    # Common fractions with their decimal values
+    fractions = {
+      "1/8" => 0.125,
+      "1/6" => 0.1667,
+      "1/4" => 0.25,
+      "1/3" => 0.3333,
+      "3/8" => 0.375,
+      "1/2" => 0.5,
+      "5/8" => 0.625,
+      "2/3" => 0.6667,
+      "3/4" => 0.75,
+      "5/6" => 0.8333,
+      "7/8" => 0.875
+    }
+
+    # Find the fraction with the smallest distance to the decimal
+    closest = fractions.min_by { |_, value| (decimal - value).abs }
+
+    closest&.first
   end
 end
