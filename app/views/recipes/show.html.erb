@@ -67,7 +67,13 @@
       <% if @recipe.tags.any? %>
         <div class="mt-3 flex flex-wrap gap-2 items-center" id="tags-container">
           <% @recipe.tags.each do |tag| %>
-            <%= link_to tag.name, recipes_path(tag: tag.name), class: "inline-block bg-emerald-600 text-white text-sm px-3 py-1 rounded-full hover:bg-emerald-700" %>
+            <div class="inline-flex items-center bg-emerald-100 text-emerald-800 text-sm px-3 py-1 rounded-full" id="tag-<%= tag.id %>">
+              <%= link_to tag.name, recipes_path(tag: tag.name), class: "hover:bg-emerald-200" %>
+              <%= button_to "×", remove_tag_recipe_path(@recipe, tag_id: tag.id),
+                  method: :delete,
+                  data: { turbo: true, turbo_method: :delete },
+                  class: "ml-2 text-emerald-600 hover:text-emerald-800 font-bold leading-none" %>
+            </div>
           <% end %>
           <button onclick="showTagForm()" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-sm font-bold cursor-pointer">+</button>
         </div>
