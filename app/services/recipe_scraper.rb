@@ -119,7 +119,7 @@ class RecipeScraper
   end
 
   public
-  
+
   def normalize_recipe(data)
     {
       title: decode_html_entities(data["name"] || ""),
@@ -130,7 +130,8 @@ class RecipeScraper
       cook_time: parse_time(data["cookTime"]),
       servings: parse_servings(data["recipeYield"] || data["recipeCuisine"]),
       instructions: normalize_instructions(data["recipeInstructions"]),
-      ingredients: normalize_ingredients(data["recipeIngredient"])
+      ingredients: normalize_ingredients(data["recipeIngredient"]),
+      nutrition: extract_nutrition(data)
     }
   end
 
@@ -465,7 +466,7 @@ class RecipeScraper
 
   def encode_uri(url)
     return url if url.nil? || url.ascii_only?
-    
+
     # Parse the URL, encode non-ASCII characters in the path
     uri = URI.parse(url)
     uri.path = URI::DEFAULT_PARSER.escape(uri.path)
@@ -473,5 +474,40 @@ class RecipeScraper
   rescue URI::InvalidURIError
     # If parsing fails, encode the entire URL path portion
     URI::DEFAULT_PARSER.escape(url)
+  end
+
+  def extract_nutrition(data)
+    return nil unless data["nutrition"]
+
+    nutrition = data["nutrition"]
+    return nil unless nutrition.is_a?(Hash)
+
+    {
+      calories: parse_nutrition_value(nutrition["calories"]),
+      carbohydrates: parse_nutrition_value(nutrition["carbohydrateContent"]),
+      cholesterol: parse_nutrition_value(nutrition["cholesterolContent"]),
+      sodium: parse_nutrition_value(nutrition["sodiumContent"]),
+      fat: parse_nutrition_value(nutrition["fatContent"]),
+      protein: parse_nutrition_value(nutrition["proteinContent"])
+    }.compact
+  end
+
+  def parse_nutrition_value(value)
+    return nil if value.blank?
+
+    if value.is_a?(Hash)
+      # Handle cases like { "@type": "Energy", "name": "Calories", "value": "250 kcal" }
+      value = value["value"]
+    end
+
+    return nil if value.blank?
+
+    # Extract numeric value from string like "250 kcal" or "25 g"
+    if value.is_a?(String)
+      match = value.match(/([\d.]+)/)
+      return match[1].to_f if match
+    end
+
+    value.to_f if value.is_a?(Numeric)
   end
 end

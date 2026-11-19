@@ -5,6 +5,7 @@ class Recipe < ApplicationRecord
   has_many_attached :images
   has_one_attached :feature_image
   has_many_attached :documents
+  has_one :nutrition, dependent: :destroy
   extend FriendlyId
   friendly_id :title, use: :slugged
 

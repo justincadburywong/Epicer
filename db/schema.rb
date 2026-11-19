@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_27_051911) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_040812) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -64,6 +64,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_27_051911) do
     t.index ["recipe_id"], name: "index_ingredients_on_recipe_id"
   end
 
+  create_table "nutritions", force: :cascade do |t|
+    t.float "calories"
+    t.float "carbohydrates"
+    t.float "cholesterol"
+    t.datetime "created_at", null: false
+    t.float "fat"
+    t.float "protein"
+    t.bigint "recipe_id", null: false
+    t.float "sodium"
+    t.datetime "updated_at", null: false
+    t.index ["recipe_id"], name: "index_nutritions_on_recipe_id"
+  end
+
   create_table "recipe_tags", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "recipe_id", null: false
@@ -104,6 +117,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_27_051911) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ingredients", "recipes"
+  add_foreign_key "nutritions", "recipes"
   add_foreign_key "recipe_tags", "recipes"
   add_foreign_key "recipe_tags", "tags"
 end
