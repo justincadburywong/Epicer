@@ -1,15 +1,15 @@
 namespace :nutrition do
-  desc "Backfill nutrition data for all recipes that don't have it"
+  desc "Update nutrition data for all recipes"
   task backfill: :environment do
-    recipes_without_nutrition = Recipe.left_joins(:nutrition).where(nutritions: { id: nil })
-    total = recipes_without_nutrition.count
+    all_recipes = Recipe.all
+    total = all_recipes.count
 
     if total.zero?
-      puts "All recipes already have nutrition data."
+      puts "No recipes found."
       return
     end
 
-    puts "Found #{total} recipes without nutrition data. Starting backfill..."
+    puts "Found #{total} recipes. Starting nutrition update..."
     puts "=" * 50
 
     success_count = 0
@@ -17,7 +17,7 @@ namespace :nutrition do
     calculated_count = 0
     error_count = 0
 
-    recipes_without_nutrition.find_each(batch_size: 100) do |recipe|
+    all_recipes.find_each(batch_size: 100) do |recipe|
       begin
         nutrition_data = nil
 
@@ -46,14 +46,26 @@ namespace :nutrition do
           puts "[#{success_count + 1}/#{total}] ✓ #{recipe.title} (calculated)"
         end
 
-        recipe.create_nutrition!(
-          calories: nutrition_data[:calories],
-          carbohydrates: nutrition_data[:carbohydrates],
-          cholesterol: nutrition_data[:cholesterol],
-          sodium: nutrition_data[:sodium],
-          fat: nutrition_data[:fat],
-          protein: nutrition_data[:protein]
-        )
+        # Update or create nutrition record
+        if recipe.nutrition.present?
+          recipe.nutrition.update(
+            calories: nutrition_data[:calories],
+            carbohydrates: nutrition_data[:carbohydrates],
+            cholesterol: nutrition_data[:cholesterol],
+            sodium: nutrition_data[:sodium],
+            fat: nutrition_data[:fat],
+            protein: nutrition_data[:protein]
+          )
+        else
+          recipe.create_nutrition!(
+            calories: nutrition_data[:calories],
+            carbohydrates: nutrition_data[:carbohydrates],
+            cholesterol: nutrition_data[:cholesterol],
+            sodium: nutrition_data[:sodium],
+            fat: nutrition_data[:fat],
+            protein: nutrition_data[:protein]
+          )
+        end
 
         success_count += 1
       rescue => e
@@ -65,7 +77,7 @@ namespace :nutrition do
     end
 
     puts "=" * 50
-    puts "Backfill complete!"
+    puts "Nutrition update complete!"
     puts "Successfully processed: #{success_count}"
     puts "  - Scraped from source: #{scraped_count}"
     puts "  - Calculated from ingredients: #{calculated_count}"
