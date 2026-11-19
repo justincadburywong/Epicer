@@ -39,11 +39,14 @@ class RecipesController < ApplicationController
       if scraped.present?
         scraped = scraped.deep_symbolize_keys
         Rails.cache.delete("import_#{params[:import_key]}")
-        @recipe = Recipe.new(scraped.except(:ingredients, :image_url))
-        
+        @recipe = Recipe.new(scraped.except(:ingredients, :image_url, :nutrition))
+
         # Store image_url in session for attachment after recipe is saved
         session[:pending_image_url] = scraped[:image_url] if scraped[:image_url].present?
-        
+
+        # Store nutrition data in session for creation after recipe is saved
+        session[:pending_nutrition] = scraped[:nutrition] if scraped[:nutrition].present?
+
         scraped[:ingredients]&.each_with_index do |ing, index|
           @recipe.ingredients.build(ing.merge(position: index + 1))
         end
@@ -153,7 +156,13 @@ class RecipesController < ApplicationController
         end
         session.delete(:pending_image_url)
       end
-      
+
+      # Create nutrition record if there's pending nutrition data from session
+      if session[:pending_nutrition].present?
+        @recipe.create_nutrition(session[:pending_nutrition])
+        session.delete(:pending_nutrition)
+      end
+
       redirect_to @recipe, notice: "Recipe was successfully created."
     else
       render :new, status: :unprocessable_entity

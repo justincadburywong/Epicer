@@ -159,6 +159,52 @@
       </section>
     <% end %>
 
+    <% if @recipe.ingredients.any? %>
+      <section class="mb-6 bg-gray-50 p-4 rounded-lg">
+        <h2 class="font-semibold text-xl mb-3">Nutrition Facts (Per Serving)</h2>
+        <%
+          if @recipe.nutrition.present?
+            nutrition = {
+              calories: @recipe.nutrition.calories,
+              carbohydrates: @recipe.nutrition.carbohydrates,
+              cholesterol: @recipe.nutrition.cholesterol,
+              sodium: @recipe.nutrition.sodium,
+              fat: @recipe.nutrition.fat,
+              protein: @recipe.nutrition.protein
+            }
+          else
+            nutrition = NutritionCalculator.new(@recipe).calculate
+          end
+        %>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <span class="text-gray-600">Calories:</span>
+            <span class="font-semibold ml-1"><%= nutrition[:calories] %> kcal</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Carbohydrates:</span>
+            <span class="font-semibold ml-1"><%= nutrition[:carbohydrates] %> g</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Cholesterol:</span>
+            <span class="font-semibold ml-1"><%= nutrition[:cholesterol] %> mg</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Sodium:</span>
+            <span class="font-semibold ml-1"><%= nutrition[:sodium] %> mg</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Fat:</span>
+            <span class="font-semibold ml-1"><%= nutrition[:fat] %> g</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Protein:</span>
+            <span class="font-semibold ml-1"><%= nutrition[:protein] %> g</span>
+          </div>
+        </div>
+      </section>
+    <% end %>
+
     <% if @recipe.documents.attached? %>
       <section class="mb-6 no-print">
         <h2 class="font-semibold text-xl mb-3">Documents</h2>
