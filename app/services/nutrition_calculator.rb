@@ -134,15 +134,16 @@ class NutritionCalculator
     @recipe.ingredients.each do |ingredient|
       ingredient_nutrition = lookup_nutrition(ingredient)
       if ingredient_nutrition
-        # Scale by quantity (assuming quantity is in grams or similar unit)
-        # This is a simplified calculation - in reality, we'd need to convert units
-        scale_factor = ingredient.quantity || 1
-        total_nutrition[:calories] += ingredient_nutrition[:calories] * scale_factor / 100
-        total_nutrition[:carbohydrates] += ingredient_nutrition[:carbohydrates] * scale_factor / 100
-        total_nutrition[:cholesterol] += ingredient_nutrition[:cholesterol] * scale_factor / 100
-        total_nutrition[:sodium] += ingredient_nutrition[:sodium] * scale_factor / 100
-        total_nutrition[:fat] += ingredient_nutrition[:fat] * scale_factor / 100
-        total_nutrition[:protein] += ingredient_nutrition[:protein] * scale_factor / 100
+        # Convert quantity to grams for scaling
+        grams = convert_to_grams(ingredient.quantity, ingredient.unit)
+        grams ||= ingredient.quantity || 1  # Fallback to assuming grams if conversion fails
+
+        total_nutrition[:calories] += ingredient_nutrition[:calories] * grams / 100
+        total_nutrition[:carbohydrates] += ingredient_nutrition[:carbohydrates] * grams / 100
+        total_nutrition[:cholesterol] += ingredient_nutrition[:cholesterol] * grams / 100
+        total_nutrition[:sodium] += ingredient_nutrition[:sodium] * grams / 100
+        total_nutrition[:fat] += ingredient_nutrition[:fat] * grams / 100
+        total_nutrition[:protein] += ingredient_nutrition[:protein] * grams / 100
       end
     end
 
@@ -160,14 +161,98 @@ class NutritionCalculator
 
   private
 
+  # Common adjectives to ignore when matching
+  ADJECTIVES = %w[liquid fresh frozen dried cooked raw chopped sliced diced minced grated whole ground powdered sweetened unsweetened salted unsalted organic natural low-fat fat-free reduced-fat gluten-free].freeze
+
   def lookup_nutrition(ingredient)
-    # Try to find a match in our nutrition database
+    # Try to find a match in our nutrition database using fuzzy matching
     ingredient_name = ingredient.name.downcase
+
+    # Remove common adjectives and units from ingredient name
+    cleaned_name = clean_ingredient_name(ingredient_name)
+
+    # Try exact match first
+    if NUTRITION_DB[cleaned_name]
+      return NUTRITION_DB[cleaned_name]
+    end
+
+    # Try fuzzy matching with word overlap scoring
+    best_match = nil
+    best_score = 0
+
     NUTRITION_DB.each do |key, value|
-      if ingredient_name.include?(key) || key.include?(ingredient_name)
-        return value
+      score = calculate_match_score(cleaned_name, key)
+      if score > best_score && score >= 0.5  # Minimum 50% match
+        best_score = score
+        best_match = value
       end
     end
-    nil
+
+    best_match
+  end
+
+  def clean_ingredient_name(name)
+    # Remove common adjectives
+    words = name.split
+    filtered = words.reject { |word| ADJECTIVES.include?(word) }
+    filtered.join(" ")
+  end
+
+  def calculate_match_score(ingredient, db_key)
+    ingredient_words = ingredient.split
+    db_words = db_key.split
+
+    # Calculate word overlap
+    matches = 0
+    ingredient_words.each do |word|
+      matches += 1 if db_words.any? { |db_word| db_word.include?(word) || word.include?(db_word) }
+    end
+
+    # Score based on proportion of ingredient words matched
+    return 0 if ingredient_words.empty?
+    matches.to_f / ingredient_words.length
+  end
+
+  def convert_to_grams(quantity, unit)
+    return nil unless quantity.is_a?(Numeric)
+
+    unit = unit.to_s.downcase.strip
+
+    conversions = {
+      # Volume to grams (approximate)
+      "cup" => 240,
+      "cups" => 240,
+      "tablespoon" => 15,
+      "tablespoons" => 15,
+      "tbsp" => 15,
+      "teaspoon" => 5,
+      "teaspoons" => 5,
+      "tsp" => 5,
+      "ml" => 1,
+      "milliliter" => 1,
+      "milliliters" => 1,
+      "liter" => 1000,
+      "liters" => 1000,
+      "l" => 1000,
+      # Weight
+      "g" => 1,
+      "gram" => 1,
+      "grams" => 1,
+      "kg" => 1000,
+      "kilogram" => 1000,
+      "kilograms" => 1000,
+      "oz" => 28.35,
+      "ounce" => 28.35,
+      "ounces" => 28.35,
+      "lb" => 453.59,
+      "pound" => 453.59,
+      "pounds" => 453.59
+    }
+
+    if conversions[unit]
+      quantity * conversions[unit]
+    else
+      nil  # Unknown unit, assume grams
+    end
   end
 end
